@@ -1,0 +1,359 @@
+// XCLSV Process Hub - Database Schema
+// WO-1: Set Up PostgreSQL Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  EDITOR
+  VIEWER
+}
+
+enum ProcessStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProcessArea {
+  PARTNERSHIPS
+  EVENT_SCHEDULING
+  EVENT_MARKETPLACE
+  AMBASSADOR_RECRUITMENT
+  AMBASSADOR_MANAGEMENT
+  OPERATIONS
+  CLIENT_MANAGEMENT
+  FINANCES
+  AFFILIATE_MANAGEMENT
+  PRODUCT_DEVELOPMENT
+}
+
+enum AuditOperation {
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  ARCHIVE
+  RESTORE
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  OVERDUE
+}
+
+// =============================================================================
+// USER & AUTHENTICATION
+// =============================================================================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String
+  avatarUrl     String?
+  role          UserRole  @default(VIEWER)
+  isActive      Boolean   @default(true)
+  
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  
+  // Relations
+  refreshTokens    RefreshToken[]
+  ownedProcesses   Process[]          @relation("ProcessOwner")
+  createdVersions  ProcessVersion[]   @relation("VersionCreator")
+  comments         Comment[]
+  auditLogs        AuditLog[]
+  permissions      ProcessPermission[]
+  activities       UserActivity[]
+  
+  @@index([email])
+  @@index([role])
+  @@index([deletedAt])
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// =============================================================================
+// PROCESS DOCUMENTATION
+// =============================================================================
+
+model Process {
+  id              String        @id @default(uuid())
+  title           String
+  slug            String        @unique
+  description     String?       @db.Text
+  content         String?       @db.Text
+  status          ProcessStatus @default(DRAFT)
+  area            ProcessArea
+  
+  // Version tracking
+  currentVersion  Int           @default(1)
+  
+  // Ownership
+  ownerId         String
+  owner           User          @relation("ProcessOwner", fields: [ownerId], references: [id])
+  
+  // Verification schedule
+  verificationDueAt   DateTime?
+  verificationStatus  VerificationStatus @default(PENDING)
+  lastVerifiedAt      DateTime?
+  verificationCadenceDays Int @default(90) // Default quarterly review
+  
+  // Metadata
+  metadata        Json?         // Flexible metadata storage
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  publishedAt     DateTime?
+  deletedAt       DateTime?
+  
+  // Relations
+  versions        ProcessVersion[]
+  permissions     ProcessPermission[]
+  comments        Comment[]
+  tags            ProcessTag[]
+  relatedFrom     ProcessRelation[] @relation("RelatedFrom")
+  relatedTo       ProcessRelation[] @relation("RelatedTo")
+  
+  @@index([ownerId])
+  @@index([area])
+  @@index([status])
+  @@index([slug])
+  @@index([deletedAt])
+  @@index([verificationDueAt])
+  @@index([verificationStatus])
+}
+
+model ProcessVersion {
+  id            String   @id @default(uuid())
+  processId     String
+  process       Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
+  versionNumber Int
+  title         String
+  content       String   @db.Text
+  snapshot      Json     // Full process state at this version
+  changeNotes   String?  @db.Text
+  
+  // Creator
+  createdById   String
+  createdBy     User     @relation("VersionCreator", fields: [createdById], references: [id])
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  
+  @@unique([processId, versionNumber])
+  @@index([processId])
+  @@index([createdById])
+}
+
+model ProcessPermission {
+  id          String   @id @default(uuid())
+  processId   String
+  process     Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  canView     Boolean  @default(true)
+  canEdit     Boolean  @default(false)
+  canDelete   Boolean  @default(false)
+  canPublish  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([processId, userId])
+  @@index([processId])
+  @@index([userId])
+}
+
+model ProcessRelation {
+  id              String   @id @default(uuid())
+  fromProcessId   String
+  fromProcess     Process  @relation("RelatedFrom", fields: [fromProcessId], references: [id], onDelete: Cascade)
+  toProcessId     String
+  toProcess       Process  @relation("RelatedTo", fields: [toProcessId], references: [id], onDelete: Cascade)
+  relationType    String   // "depends_on", "related_to", "supersedes", etc.
+  
+  createdAt       DateTime @default(now())
+  
+  @@unique([fromProcessId, toProcessId])
+  @@index([fromProcessId])
+  @@index([toProcessId])
+}
+
+// =============================================================================
+// TAGS & CATEGORIZATION
+// =============================================================================
+
+model Tag {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  slug        String       @unique
+  color       String?      // Hex color for UI
+  description String?
+  
+  createdAt   DateTime     @default(now())
+  
+  processes   ProcessTag[]
+  
+  @@index([slug])
+}
+
+model ProcessTag {
+  id          String   @id @default(uuid())
+  processId   String
+  process     Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
+  tagId       String
+  tag         Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  
+  @@unique([processId, tagId])
+  @@index([processId])
+  @@index([tagId])
+}
+
+// =============================================================================
+// COMMENTS & COLLABORATION
+// =============================================================================
+
+model Comment {
+  id              String    @id @default(uuid())
+  processId       String
+  process         Process   @relation(fields: [processId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  content         String    @db.Text
+  
+  // Thread support
+  parentId        String?
+  parent          Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies         Comment[] @relation("CommentReplies")
+  
+  // Resolution tracking
+  isResolved      Boolean   @default(false)
+  resolvedAt      DateTime?
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  
+  @@index([processId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([deletedAt])
+}
+
+// =============================================================================
+// AUDIT LOGGING
+// =============================================================================
+
+model AuditLog {
+  id          String         @id @default(uuid())
+  entityType  String         // "Process", "User", "Comment", etc.
+  entityId    String
+  operation   AuditOperation
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  changes     Json           // Before/after snapshot
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt   DateTime       @default(now())
+  
+  // Audit logs are immutable - no update or delete
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([operation])
+}
+
+// =============================================================================
+// USER ACTIVITY TRACKING
+// =============================================================================
+
+model UserActivity {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityType String  // "view", "search", "edit", etc.
+  entityType  String?  // "Process", "Tag", etc.
+  entityId    String?
+  metadata    Json?    // Additional context (search query, etc.)
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([activityType])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// MEDIA & ATTACHMENTS
+// =============================================================================
+
+model Media {
+  id          String   @id @default(uuid())
+  filename    String
+  originalName String
+  mimeType    String
+  size        Int      // bytes
+  url         String   // S3 URL or path
+  thumbnailUrl String?
+  
+  // Uploader
+  uploadedById String?
+  
+  // Metadata
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+  deletedAt   DateTime?
+  
+  @@index([uploadedById])
+  @@index([mimeType])
+  @@index([deletedAt])
+}
+
+// =============================================================================
+// SEED DATA TABLES
+// =============================================================================
+
+model DefaultRole {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  permissions Json     // Default permissions for this role
+  description String?
+  
+  createdAt   DateTime @default(now())
+}
