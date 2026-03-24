@@ -3,19 +3,20 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
-  HttpException,
-  HttpStatus,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
-
-// In-memory store for development (use Redis in production)
-const idempotencyStore = new Map<string, { response: any; timestamp: number }>();
-const IDEMPOTENCY_TTL = 24 * 60 * 60 * 1000; // 24 hours
+import { CacheService } from '@/modules/cache/cache.service';
 
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  constructor(
+    @Optional() private readonly cacheService?: CacheService,
+  ) {}
+
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
     const method = request.method;
 
@@ -25,25 +26,19 @@ export class IdempotencyInterceptor implements NestInterceptor {
     }
 
     const idempotencyKey = request.headers['x-idempotency-key'];
-    if (!idempotencyKey) {
+    if (!idempotencyKey || !this.cacheService) {
       return next.handle();
     }
 
     // Check for existing response
-    const cached = idempotencyStore.get(idempotencyKey);
+    const cached = await this.cacheService.getIdempotencyKey(idempotencyKey);
     if (cached) {
-      if (Date.now() - cached.timestamp < IDEMPOTENCY_TTL) {
-        return of(cached.response);
-      }
-      idempotencyStore.delete(idempotencyKey);
+      return of(cached);
     }
 
     return next.handle().pipe(
-      tap((response) => {
-        idempotencyStore.set(idempotencyKey, {
-          response,
-          timestamp: Date.now(),
-        });
+      tap(async (response) => {
+        await this.cacheService.setIdempotencyKey(idempotencyKey, response);
       }),
     );
   }
