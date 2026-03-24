@@ -23,6 +23,7 @@ import { CommentEditHistoryService } from './comment-edit-history.service';
 import { CreateCommentDto, UpdateCommentDto, CommentResponseDto, CommentsListResponseDto } from './dto';
 
 @ApiTags('Comments')
+@Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class CommentsController {
