@@ -269,18 +269,27 @@ export class StepsService {
     }
 
     await prisma.$transaction(async (tx) => {
-      // Soft delete
+      // Soft delete - also set sequence to negative to remove from unique constraint
       await tx.processStep.update({
         where: { id: stepId },
-        data: { deletedAt: new Date() },
+        data: { deletedAt: new Date(), sequence: -step.sequence },
       });
 
-      // Resequence remaining steps
+      // Get remaining steps
       const remainingSteps = await tx.processStep.findMany({
         where: { processId, deletedAt: null },
         orderBy: { sequence: 'asc' },
       });
 
+      // First pass: set all to negative to avoid unique constraint collision
+      for (let i = 0; i < remainingSteps.length; i++) {
+        await tx.processStep.update({
+          where: { id: remainingSteps[i].id },
+          data: { sequence: -(i + 1000) }, // Use large negative to avoid collision with deleted step
+        });
+      }
+
+      // Second pass: set to correct positive sequence
       for (let i = 0; i < remainingSteps.length; i++) {
         await tx.processStep.update({
           where: { id: remainingSteps[i].id },
@@ -327,7 +336,15 @@ export class StepsService {
     }
 
     await prisma.$transaction(async (tx) => {
-      // Update sequence for each step
+      // First pass: set all sequences to negative to avoid unique constraint collision
+      for (let i = 0; i < dto.stepIds.length; i++) {
+        await tx.processStep.update({
+          where: { id: dto.stepIds[i] },
+          data: { sequence: -(i + 1000) },
+        });
+      }
+
+      // Second pass: set to correct positive sequence
       for (let i = 0; i < dto.stepIds.length; i++) {
         await tx.processStep.update({
           where: { id: dto.stepIds[i] },
