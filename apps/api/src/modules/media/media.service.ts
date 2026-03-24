@@ -5,12 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@xclsv/database';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-
-const prisma = new PrismaClient();
 
 export interface UploadedFile {
   originalname: string;
@@ -123,7 +121,7 @@ export class MediaService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return media.map((m) => ({
+    return media.map((m: { id: string; filename: string; originalName: string; mimeType: string; size: number; url: string; thumbnailUrl: string | null }) => ({
       id: m.id,
       filename: m.filename,
       originalName: m.originalName,

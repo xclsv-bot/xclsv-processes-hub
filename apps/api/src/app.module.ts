@@ -11,6 +11,10 @@ import { VersionsModule } from './modules/versions/versions.module';
 import { SearchModule } from './modules/search/search.module';
 import { AIModule } from './modules/ai/ai.module';
 import { MediaModule } from './modules/media/media.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { OwnershipModule } from './modules/ownership/ownership.module';
+import { VerificationModule } from './modules/verification/verification.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -25,6 +29,7 @@ import { MediaModule } from './modules/media/media.module';
     ]),
     CacheModule,
     AuthorizationModule,
+    NotificationsModule,
     HealthModule,
     AuthModule,
     UsersModule,
@@ -33,6 +38,9 @@ import { MediaModule } from './modules/media/media.module';
     SearchModule,
     AIModule,
     MediaModule,
+    DashboardModule,
+    OwnershipModule,
+    VerificationModule,
   ],
 })
 export class AppModule {}

@@ -4,9 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@xclsv/database';
 
 @Injectable()
 export class VersionsService {

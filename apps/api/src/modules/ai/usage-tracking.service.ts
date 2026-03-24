@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@xclsv/database';
 
 export interface UsageRecord {
   userId: string;
@@ -13,7 +11,7 @@ export interface UsageRecord {
 }
 
 // Approximate costs per 1K tokens (as of 2024)
-const MODEL_COSTS = {
+const MODEL_COSTS: Record<string, { input: number; output: number }> = {
   'claude-sonnet-4-20250514': { input: 0.003, output: 0.015 },
   'claude-3-haiku-20240307': { input: 0.00025, output: 0.00125 },
   'text-embedding-ada-002': { input: 0.0001, output: 0 },
@@ -69,7 +67,7 @@ export class UsageTrackingService {
     });
 
     const summary = records.reduce(
-      (acc, record) => {
+      (acc: { totalInputTokens: number; totalOutputTokens: number; totalCost: number; requestCount: number }, record) => {
         const changes = record.changes as any;
         acc.totalInputTokens += changes.inputTokens || 0;
         acc.totalOutputTokens += changes.outputTokens || 0;

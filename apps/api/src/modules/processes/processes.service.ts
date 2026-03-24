@@ -5,12 +5,9 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@xclsv/database';
 import { CreateProcessDto, UpdateProcessDto, ProcessStatus } from './dto';
 import { PaginationQueryDto, PaginatedResponseDto } from '@/common/dto/pagination.dto';
-
-// Initialize Prisma client
-const prisma = new PrismaClient();
 
 @Injectable()
 export class ProcessesService {
