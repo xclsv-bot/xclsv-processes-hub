@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@xclsv/database';
 
 export type NotificationType = 
   | 'PROCESS_PUBLISHED'

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { prisma, Process } from '@xclsv/database';
+import { prisma } from '@xclsv/database';
 
 export interface DashboardStats {
   totalProcesses: number;
