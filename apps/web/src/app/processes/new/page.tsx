@@ -3,11 +3,22 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { FileUpload } from '@/components/upload';
+
+interface UploadedFile {
+  id: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  url: string;
+}
 
 export default function NewProcessPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -16,18 +27,38 @@ export default function NewProcessPage() {
     tags: '',
   });
 
+  const handleFileUpload = (file: UploadedFile) => {
+    setUploadedFiles((prev) => [...prev, file]);
+  };
+
+  const handleFileRemove = (fileId: string) => {
+    setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
 
     try {
+      // Build content with file references if any
+      let content = formData.content || '<p></p>';
+      
+      // Append uploaded files as attachments section
+      if (uploadedFiles.length > 0) {
+        const attachmentsList = uploadedFiles
+          .map((f) => `<li><a href="${f.url}" target="_blank">${f.originalName}</a></li>`)
+          .join('\n');
+        content += `\n\n<h3>Attachments</h3>\n<ul>\n${attachmentsList}\n</ul>`;
+      }
+
       const payload = {
         title: formData.title,
         description: formData.description,
-        content: formData.content || '<p></p>',
+        content,
         category: formData.category || 'General',
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+        mediaIds: uploadedFiles.map((f) => f.id),
       };
 
       await api.post('/processes', payload);
@@ -132,7 +163,24 @@ export default function NewProcessPage() {
             />
           </div>
 
-          <div className="flex gap-4">
+          {/* File Upload Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Attachments
+            </label>
+            <FileUpload
+              onUpload={handleFileUpload}
+              onRemove={handleFileRemove}
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+              maxSize={10}
+              multiple
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Upload documents, images, or spreadsheets related to this process
+            </p>
+          </div>
+
+          <div className="flex gap-4 pt-4 border-t">
             <button
               type="submit"
               disabled={isSubmitting}
