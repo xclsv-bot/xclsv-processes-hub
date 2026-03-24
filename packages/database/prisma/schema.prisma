@@ -26,6 +26,7 @@ model User {
   refreshTokens   RefreshToken[]
   activities      UserActivity[]
   uploadedMedia   Media[]             @relation("MediaUploader")
+  stepOwnerships  StepOwner[]
 
   @@index([email])
   @@index([role])
@@ -74,6 +75,7 @@ model Process {
   tags                    ProcessTag[]
   versions                ProcessVersion[]
   media                   Media[]
+  steps                   ProcessStep[]
 
   @@index([ownerId])
   @@index([area])
@@ -100,6 +102,68 @@ model ProcessVersion {
   @@unique([processId, version])
   @@index([processId])
   @@index([createdById])
+}
+
+model ProcessStep {
+  id          String      @id @default(uuid())
+  processId   String
+  sequence    Int
+  title       String
+  description String?     @db.Text
+  isHandoff   Boolean     @default(false)
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+  process     Process     @relation(fields: [processId], references: [id], onDelete: Cascade)
+  owners      StepOwner[]
+  tools       StepTool[]
+
+  @@unique([processId, sequence])
+  @@index([processId])
+  @@index([sequence])
+  @@index([deletedAt])
+}
+
+model Tool {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  slug        String     @unique
+  icon        String?
+  color       String?
+  description String?
+  url         String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  steps       StepTool[]
+
+  @@index([slug])
+}
+
+model StepOwner {
+  id        String      @id @default(uuid())
+  stepId    String
+  userId    String
+  createdAt DateTime    @default(now())
+  step      ProcessStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([stepId, userId])
+  @@index([stepId])
+  @@index([userId])
+}
+
+model StepTool {
+  id        String      @id @default(uuid())
+  stepId    String
+  toolId    String
+  createdAt DateTime    @default(now())
+  step      ProcessStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  tool      Tool        @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([stepId, toolId])
+  @@index([stepId])
+  @@index([toolId])
 }
 
 model ProcessPermission {

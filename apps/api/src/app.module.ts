@@ -21,6 +21,8 @@ import { RolesModule } from './modules/roles/roles.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { AccessRequestsModule } from './modules/access-requests/access-requests.module';
 import { AccessAuditModule } from './modules/access-audit/access-audit.module';
+import { StepsModule } from './modules/steps/steps.module';
+import { ToolsModule } from './modules/tools/tools.module';
 
 @Module({
   imports: [
@@ -53,6 +55,8 @@ import { AccessAuditModule } from './modules/access-audit/access-audit.module';
     PermissionsModule,
     AccessRequestsModule,
     AccessAuditModule,
+    StepsModule,
+    ToolsModule,
   ],
 })
 export class AppModule {}

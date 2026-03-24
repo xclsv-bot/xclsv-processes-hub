@@ -1,0 +1,115 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { StepsService } from './steps.service';
+import { CreateStepDto, UpdateStepDto, ReorderStepsDto, StepResponseDto, StepsListResponseDto } from './dto';
+
+@ApiTags('Process Steps')
+@Controller('processes/:processId/steps')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
+export class StepsController {
+  constructor(private readonly stepsService: StepsService) {}
+
+  @Post()
+  @Roles('ADMIN', 'MANAGER', 'EDITOR')
+  @ApiOperation({ summary: 'Create a new step for a process' })
+  @ApiParam({ name: 'processId', description: 'Process ID' })
+  @ApiResponse({ status: 201, description: 'Step created successfully', type: StepResponseDto })
+  @ApiResponse({ status: 404, description: 'Process not found' })
+  async create(
+    @Param('processId') processId: string,
+    @Body() dto: CreateStepDto,
+    @Request() req: { user: { id: string } },
+  ): Promise<{ data: StepResponseDto }> {
+    const step = await this.stepsService.create(processId, dto, req.user.id);
+    return { data: step };
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all steps for a process (ordered by sequence)' })
+  @ApiParam({ name: 'processId', description: 'Process ID' })
+  @ApiResponse({ status: 200, description: 'Steps retrieved successfully', type: StepsListResponseDto })
+  @ApiResponse({ status: 404, description: 'Process not found' })
+  async findAll(@Param('processId') processId: string): Promise<{ data: StepsListResponseDto }> {
+    const result = await this.stepsService.findAll(processId);
+    return { data: result };
+  }
+
+  @Get(':stepId')
+  @ApiOperation({ summary: 'Get a specific step' })
+  @ApiParam({ name: 'processId', description: 'Process ID' })
+  @ApiParam({ name: 'stepId', description: 'Step ID' })
+  @ApiResponse({ status: 200, description: 'Step retrieved successfully', type: StepResponseDto })
+  @ApiResponse({ status: 404, description: 'Step not found' })
+  async findOne(
+    @Param('processId') processId: string,
+    @Param('stepId') stepId: string,
+  ): Promise<{ data: StepResponseDto }> {
+    const step = await this.stepsService.findOne(processId, stepId);
+    return { data: step };
+  }
+
+  @Put(':stepId')
+  @Roles('ADMIN', 'MANAGER', 'EDITOR')
+  @ApiOperation({ summary: 'Update a step' })
+  @ApiParam({ name: 'processId', description: 'Process ID' })
+  @ApiParam({ name: 'stepId', description: 'Step ID' })
+  @ApiResponse({ status: 200, description: 'Step updated successfully', type: StepResponseDto })
+  @ApiResponse({ status: 404, description: 'Step not found' })
+  async update(
+    @Param('processId') processId: string,
+    @Param('stepId') stepId: string,
+    @Body() dto: UpdateStepDto,
+    @Request() req: { user: { id: string } },
+  ): Promise<{ data: StepResponseDto }> {
+    const step = await this.stepsService.update(processId, stepId, dto, req.user.id);
+    return { data: step };
+  }
+
+  @Delete(':stepId')
+  @Roles('ADMIN', 'MANAGER')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a step' })
+  @ApiParam({ name: 'processId', description: 'Process ID' })
+  @ApiParam({ name: 'stepId', description: 'Step ID' })
+  @ApiResponse({ status: 204, description: 'Step deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Step not found' })
+  async remove(
+    @Param('processId') processId: string,
+    @Param('stepId') stepId: string,
+    @Request() req: { user: { id: string } },
+  ): Promise<void> {
+    await this.stepsService.remove(processId, stepId, req.user.id);
+  }
+
+  @Patch('reorder')
+  @Roles('ADMIN', 'MANAGER', 'EDITOR')
+  @ApiOperation({ summary: 'Reorder steps (atomic operation)' })
+  @ApiParam({ name: 'processId', description: 'Process ID' })
+  @ApiResponse({ status: 200, description: 'Steps reordered successfully', type: StepsListResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid step IDs or count mismatch' })
+  async reorder(
+    @Param('processId') processId: string,
+    @Body() dto: ReorderStepsDto,
+    @Request() req: { user: { id: string } },
+  ): Promise<{ data: StepsListResponseDto }> {
+    const result = await this.stepsService.reorder(processId, dto, req.user.id);
+    return { data: result };
+  }
+}
