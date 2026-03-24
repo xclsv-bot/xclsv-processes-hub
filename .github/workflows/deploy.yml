@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -85,7 +85,7 @@ jobs:
     environment: production
     needs: [deploy-api]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
