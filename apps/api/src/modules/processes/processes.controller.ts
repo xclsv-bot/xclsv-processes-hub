@@ -30,14 +30,16 @@ export class ProcessesController {
   constructor(private readonly processesService: ProcessesService) {}
 
   @Post()
-  @RequirePermissions(Permission.PROCESS_CREATE)
+  @Public()  // MVP: Allow public creation
   @ApiOperation({ summary: 'Create a new process' })
   @ApiResponse({ status: 201, description: 'Process created', type: ProcessResponseDto })
   async create(
     @Body() dto: CreateProcessDto,
-    @CurrentUser('id') userId: string,
+    @CurrentUser('id') userId?: string,
   ) {
-    return this.processesService.create(dto, userId);
+    // MVP: Default to Z's user if no auth
+    const ownerId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    return this.processesService.create(dto, ownerId);
   }
 
   @Get()
@@ -73,15 +75,17 @@ export class ProcessesController {
   }
 
   @Put(':id')
-  @RequirePermissions(Permission.PROCESS_UPDATE)
+  @Public()  // MVP: Allow public updates
   @ApiOperation({ summary: 'Update a process' })
   @ApiResponse({ status: 200, description: 'Process updated', type: ProcessResponseDto })
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateProcessDto,
-    @CurrentUser('id') userId: string,
+    @CurrentUser('id') userId?: string,
   ) {
-    return this.processesService.update(id, dto, userId);
+    // MVP: Default to Z's user if no auth
+    const ownerId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    return this.processesService.update(id, dto, ownerId);
   }
 
   @Post(':id/publish')

@@ -1,19 +1,19 @@
 services:
   - type: web
-    name: xclsv-process-hub-api
+    name: xclsv-processes-api
     runtime: node
     region: ohio
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
+    buildCommand: pnpm install && pnpm build
+    startCommand: node dist/main.js
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 4000
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
       - key: CORS_ORIGINS
-        value: https://web-xclsv.vercel.app,http://localhost:3000
+        value: https://web-xclsv.vercel.app,https://process-hub.xclsvmedia.com

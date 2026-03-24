@@ -25,7 +25,7 @@ export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
   @Post('upload')
-  @RequirePermissions(Permission.PROCESS_UPDATE)
+  @Public()  // MVP: Allow public uploads
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload a file' })
@@ -41,9 +41,11 @@ export class MediaController {
   @ApiResponse({ status: 201, description: 'File uploaded' })
   async upload(
     @UploadedFile() file: Express.Multer.File,
-    @CurrentUser('id') userId: string,
+    @CurrentUser('id') userId?: string,
     @Query('processId') processId?: string,
   ) {
+    // MVP: Default to Z's user if no auth
+    const uploaderId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
     return this.mediaService.upload(
       {
         originalname: file.originalname,
@@ -51,7 +53,7 @@ export class MediaController {
         buffer: file.buffer,
         size: file.size,
       },
-      userId,
+      uploaderId,
       processId,
     );
   }
