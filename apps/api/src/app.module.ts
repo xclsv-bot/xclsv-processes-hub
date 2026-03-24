@@ -15,6 +15,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { OwnershipModule } from './modules/ownership/ownership.module';
 import { VerificationModule } from './modules/verification/verification.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { WorkflowsModule } from './modules/workflows/workflows.module';
+import { FlagsModule } from './modules/flags/flags.module';
 
 @Module({
   imports: [
@@ -41,6 +43,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     DashboardModule,
     OwnershipModule,
     VerificationModule,
+    WorkflowsModule,
+    FlagsModule,
   ],
 })
 export class AppModule {}
