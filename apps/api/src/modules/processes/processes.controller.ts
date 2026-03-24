@@ -115,14 +115,15 @@ export class ProcessesController {
   }
 
   @Delete(':id')
-  @RequirePermissions(Permission.PROCESS_DELETE)
+  @Public()  // MVP: Allow public deletes
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a process (soft delete)' })
   @ApiResponse({ status: 204, description: 'Process deleted' })
   async delete(
     @Param('id') id: string,
-    @CurrentUser('id') userId: string,
+    @CurrentUser('id') userId?: string,
   ) {
-    return this.processesService.delete(id, userId);
+    const ownerId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    return this.processesService.delete(id, ownerId);
   }
 }
