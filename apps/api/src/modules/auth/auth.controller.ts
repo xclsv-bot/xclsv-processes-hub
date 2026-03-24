@@ -69,13 +69,13 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user info' })
   @ApiResponse({ status: 200, description: 'Current user info' })
   async me(@Request() req: any) {
-    const user = await this.authService.validateUser(req.user.id);
+    const user = await this.authService.getMe(req.user.id);
     return {
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
-      department: user.department,
+      avatarUrl: user.avatarUrl,
     };
   }
 }

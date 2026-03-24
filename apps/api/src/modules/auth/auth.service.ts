@@ -8,11 +8,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { prisma } from '@xclsv/database';
 import { LoginDto, LoginResponseDto, RegisterDto, RefreshTokenDto } from './dto';
-
-// Temporary in-memory store (will be replaced with Prisma)
-const users = new Map<string, any>();
-const refreshTokens = new Map<string, { userId: string; expiresAt: Date }>();
 
 @Injectable()
 export class AuthService {
@@ -26,9 +23,9 @@ export class AuthService {
 
   async register(dto: RegisterDto): Promise<LoginResponseDto> {
     // Check if user exists
-    const existingUser = Array.from(users.values()).find(
-      (u) => u.email === dto.email,
-    );
+    const existingUser = await prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (existingUser) {
       throw new ConflictException('Email already registered');
     }
@@ -36,32 +33,37 @@ export class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, this.saltRounds);
 
-    // Create user
-    const user = {
-      id: uuidv4(),
-      email: dto.email,
-      name: dto.name,
-      password: hashedPassword,
-      role: 'VIEWER', // Default role
-      department: dto.department,
-      createdAt: new Date(),
-    };
+    // Check if this is the first user - make them ADMIN
+    const userCount = await prisma.user.count();
+    const role = userCount === 0 ? 'ADMIN' : 'VIEWER';
 
-    users.set(user.id, user);
-    this.logger.log(`User registered: ${user.email}`);
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        id: uuidv4(),
+        email: dto.email,
+        name: dto.name,
+        passwordHash: hashedPassword,
+        role: role,
+      },
+    });
+
+    this.logger.log(`User registered: ${user.email} with role ${user.role}`);
 
     return this.generateTokens(user);
   }
 
   async login(dto: LoginDto): Promise<LoginResponseDto> {
     // Find user
-    const user = Array.from(users.values()).find((u) => u.email === dto.email);
-    if (!user) {
+    const user = await prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
     // Verify password
-    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -71,53 +73,91 @@ export class AuthService {
   }
 
   async refreshToken(dto: RefreshTokenDto): Promise<LoginResponseDto> {
-    const tokenData = refreshTokens.get(dto.refreshToken);
-    
-    if (!tokenData || tokenData.expiresAt < new Date()) {
-      refreshTokens.delete(dto.refreshToken);
+    const tokenRecord = await prisma.refreshToken.findUnique({
+      where: { token: dto.refreshToken },
+      include: { user: true },
+    });
+
+    if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
+      if (tokenRecord) {
+        await prisma.refreshToken.delete({
+          where: { id: tokenRecord.id },
+        });
+      }
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    const user = users.get(tokenData.userId);
+    // Delete the used refresh token
+    await prisma.refreshToken.delete({
+      where: { id: tokenRecord.id },
+    });
+
+    this.logger.log(`Token refreshed for user: ${tokenRecord.user.email}`);
+    return this.generateTokens(tokenRecord.user);
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    const tokenRecord = await prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+    });
+
+    if (tokenRecord) {
+      await prisma.refreshToken.delete({
+        where: { id: tokenRecord.id },
+      });
+    }
+
+    this.logger.log('User logged out');
+  }
+
+  async getMe(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        avatarUrl: true,
+        createdAt: true,
+      },
+    });
+
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    // Delete old refresh token
-    refreshTokens.delete(dto.refreshToken);
-
-    return this.generateTokens(user);
+    return user;
   }
 
-  async logout(refreshToken: string): Promise<void> {
-    refreshTokens.delete(refreshToken);
-  }
-
-  async validateUser(userId: string): Promise<any> {
-    return users.get(userId);
-  }
-
-  private generateTokens(user: any): LoginResponseDto {
+  private async generateTokens(user: any): Promise<LoginResponseDto> {
     const payload = {
       sub: user.id,
       email: user.email,
       role: user.role,
     };
 
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = uuidv4();
-    const expiresIn = 900; // 15 minutes in seconds
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: this.configService.get('jwt.expiresIn', '15m'),
+    });
 
-    // Store refresh token (7 days)
-    refreshTokens.set(refreshToken, {
-      userId: user.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    const refreshToken = uuidv4();
+    const refreshExpiresAt = new Date();
+    refreshExpiresAt.setDate(refreshExpiresAt.getDate() + 7);
+
+    // Store refresh token in database
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: refreshExpiresAt,
+      },
     });
 
     return {
       accessToken,
       refreshToken,
-      expiresIn,
+      expiresIn: 900, // 15 minutes in seconds
       user: {
         id: user.id,
         email: user.email,
