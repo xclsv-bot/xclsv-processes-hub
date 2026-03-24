@@ -143,6 +143,7 @@ model Process {
   tags            ProcessTag[]
   relatedFrom     ProcessRelation[] @relation("RelatedFrom")
   relatedTo       ProcessRelation[] @relation("RelatedTo")
+  embedding       ProcessEmbedding?
   
   @@index([ownerId])
   @@index([area])
