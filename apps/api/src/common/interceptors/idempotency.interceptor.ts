@@ -38,7 +38,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap(async (response) => {
-        await this.cacheService.setIdempotencyKey(idempotencyKey, response);
+        await this.cacheService?.setIdempotencyKey(idempotencyKey, response);
       }),
     );
   }
