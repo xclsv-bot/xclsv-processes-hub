@@ -74,6 +74,7 @@ model Process {
   permissions             ProcessPermission[]
   relatedFrom             ProcessRelation[]   @relation("RelatedFrom")
   relatedTo               ProcessRelation[]   @relation("RelatedTo")
+  stepDocuments           StepDocument[]      @relation("StepDocuments")
   tags                    ProcessTag[]
   versions                ProcessVersion[]
   media                   Media[]
@@ -120,6 +121,7 @@ model ProcessStep {
   process     Process     @relation(fields: [processId], references: [id], onDelete: Cascade)
   owners      StepOwner[]
   tools       StepTool[]
+  documents   StepDocument[]
 
   @@unique([processId, sequence])
   @@index([processId])
@@ -397,4 +399,19 @@ enum VerificationStatus {
   VERIFIED
   OVERDUE
   NEEDS_REVIEW
+}
+
+model StepDocument {
+  id              String      @id @default(uuid())
+  stepId          String
+  documentId      String      // References a Process that serves as a document
+  label           String?     // Optional display label
+  createdAt       DateTime    @default(now())
+  
+  step            ProcessStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  document        Process     @relation("StepDocuments", fields: [documentId], references: [id], onDelete: Cascade)
+  
+  @@unique([stepId, documentId])
+  @@index([stepId])
+  @@index([documentId])
 }

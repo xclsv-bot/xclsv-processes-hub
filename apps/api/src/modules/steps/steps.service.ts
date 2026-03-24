@@ -106,6 +106,13 @@ export class StepsService {
             },
           },
         },
+        documents: {
+          include: {
+            document: {
+              select: { id: true, title: true, slug: true, description: true, status: true },
+            },
+          },
+        },
       },
     });
 
@@ -134,6 +141,13 @@ export class StepsService {
         color: t.tool.color ?? undefined,
         url: t.tool.url ?? undefined,
       })),
+      documents: step.documents.map((d) => ({
+        id: d.document.id,
+        title: d.document.title,
+        slug: d.document.slug,
+        description: d.document.description ?? undefined,
+        label: d.label ?? undefined,
+      })),
       metadata: step.metadata as Record<string, any> | undefined,
       createdAt: step.createdAt,
       updatedAt: step.updatedAt,
@@ -161,6 +175,13 @@ export class StepsService {
           include: {
             tool: {
               select: { id: true, name: true, slug: true, icon: true, color: true, url: true },
+            },
+          },
+        },
+        documents: {
+          include: {
+            document: {
+              select: { id: true, title: true, slug: true, description: true, status: true },
             },
           },
         },
@@ -285,7 +306,7 @@ export class StepsService {
       for (let i = 0; i < remainingSteps.length; i++) {
         await tx.processStep.update({
           where: { id: remainingSteps[i].id },
-          data: { sequence: -(i + 1000) }, // Use large negative to avoid collision with deleted step
+          data: { sequence: -(i + 1000) },
         });
       }
 
@@ -319,7 +340,6 @@ export class StepsService {
     });
 
     const existingIds = new Set(steps.map((s) => s.id));
-    const providedIds = new Set(dto.stepIds);
 
     // Check all provided IDs exist
     for (const id of dto.stepIds) {
@@ -366,6 +386,54 @@ export class StepsService {
 
     this.logger.log(`Reordered steps for process ${processId}`);
     return this.findAll(processId);
+  }
+
+  // Step Documents methods
+  async addDocument(stepId: string, documentId: string, label?: string) {
+    return prisma.stepDocument.create({
+      data: {
+        stepId,
+        documentId,
+        label,
+      },
+      include: {
+        document: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            description: true,
+            status: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getDocuments(stepId: string) {
+    return prisma.stepDocument.findMany({
+      where: { stepId },
+      include: {
+        document: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            description: true,
+            status: true,
+          },
+        },
+      },
+    });
+  }
+
+  async removeDocument(stepId: string, documentId: string) {
+    await prisma.stepDocument.deleteMany({
+      where: {
+        stepId,
+        documentId,
+      },
+    });
   }
 
   private detectHandoffPoints(steps: any[]): string[] {

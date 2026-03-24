@@ -119,3 +119,47 @@ export class StepsController {
     return { data: result };
   }
 }
+
+  // Step Documents endpoints
+  @Post(':stepId/documents')
+  @ApiOperation({ summary: 'Link a document to a step' })
+  @ApiParam({ name: 'processId', description: 'Process ID' })
+  @ApiParam({ name: 'stepId', description: 'Step ID' })
+  @ApiResponse({ status: 201, description: 'Document linked successfully' })
+  async addDocument(
+    @Param('processId') processId: string,
+    @Param('stepId') stepId: string,
+    @Body() dto: { documentId: string; label?: string },
+  ): Promise<{ data: any }> {
+    const result = await this.stepsService.addDocument(stepId, dto.documentId, dto.label);
+    return { data: result };
+  }
+
+  @Get(':stepId/documents')
+  @ApiOperation({ summary: 'Get documents linked to a step' })
+  @ApiParam({ name: 'processId', description: 'Process ID' })
+  @ApiParam({ name: 'stepId', description: 'Step ID' })
+  @ApiResponse({ status: 200, description: 'Documents retrieved successfully' })
+  async getDocuments(
+    @Param('processId') processId: string,
+    @Param('stepId') stepId: string,
+  ): Promise<{ data: any[] }> {
+    const result = await this.stepsService.getDocuments(stepId);
+    return { data: result };
+  }
+
+  @Delete(':stepId/documents/:documentId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Unlink a document from a step' })
+  @ApiParam({ name: 'processId', description: 'Process ID' })
+  @ApiParam({ name: 'stepId', description: 'Step ID' })
+  @ApiParam({ name: 'documentId', description: 'Document ID' })
+  @ApiResponse({ status: 204, description: 'Document unlinked successfully' })
+  async removeDocument(
+    @Param('processId') processId: string,
+    @Param('stepId') stepId: string,
+    @Param('documentId') documentId: string,
+  ): Promise<void> {
+    await this.stepsService.removeDocument(stepId, documentId);
+  }
+}
