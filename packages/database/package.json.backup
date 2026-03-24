@@ -24,9 +24,7 @@
     "seed": "tsx prisma/seed.ts",
     "studio": "prisma studio",
     "build": "tsc",
-    "dev": "tsc --watch",
-    "migrate:create": "prisma migrate dev --create-only",
-    "migrate:apply": "prisma migrate dev --skip-generate"
+    "dev": "tsc --watch"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

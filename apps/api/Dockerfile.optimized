@@ -1,0 +1,92 @@
+# Multi-stage Dockerfile for xclsv-processes-api
+# Optimized for Render deployment with layer caching
+
+# ===================================
+# Stage 1: Base - Setup pnpm
+# ===================================
+FROM node:20-alpine AS base
+
+# Enable corepack and setup pnpm
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+WORKDIR /app
+
+# ===================================
+# Stage 2: Dependencies - Install all dependencies
+# ===================================
+FROM base AS deps
+
+# Copy workspace configuration
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+
+# Copy package.json files for all workspaces
+COPY packages/database/package.json ./packages/database/
+COPY apps/api/package.json ./apps/api/
+
+# Install dependencies (including dev dependencies for build)
+# This layer is cached unless package files change
+RUN pnpm install --frozen-lockfile --prod=false
+
+# ===================================
+# Stage 3: Builder - Build the application
+# ===================================
+FROM base AS builder
+
+# Copy node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/database/node_modules ./packages/database/node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN pnpm db:generate
+
+# Build the database package first
+RUN pnpm --filter @xclsv/database build
+
+# Build the API
+RUN pnpm --filter @xclsv/api build
+
+# ===================================
+# Stage 4: Production - Minimal runtime image
+# ===================================
+FROM node:20-alpine AS runner
+
+# Set production environment
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nestjs
+
+# Copy only production dependencies
+COPY --from=deps --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=deps --chown=nestjs:nodejs /app/packages/database/node_modules ./packages/database/node_modules
+COPY --from=deps --chown=nestjs:nodejs /app/apps/api/node_modules ./apps/api/node_modules
+
+# Copy built application
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=nestjs:nodejs /app/packages/database/dist ./packages/database/dist
+
+# Copy Prisma client artifacts
+COPY --from=builder --chown=nestjs:nodejs /app/packages/database/node_modules/.prisma ./packages/database/node_modules/.prisma
+
+# Copy prisma schema (needed for migrations)
+COPY --from=builder --chown=nestjs:nodejs /app/packages/database/prisma ./packages/database/prisma
+
+# Switch to non-root user
+USER nestjs
+
+# Expose the port (Render sets PORT env var to 10000)
+EXPOSE 10000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:10000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+# Start the application
+CMD ["node", "apps/api/dist/main.js"]

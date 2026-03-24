@@ -1,0 +1,21 @@
+{
+  "name": "xclsv-processes-hub",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "db:generate": "pnpm --filter @xclsv/database generate",
+    "db:push": "pnpm --filter @xclsv/database push",
+    "db:migrate": "pnpm --filter @xclsv/database migrate",
+    "db:studio": "pnpm --filter @xclsv/database studio"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "pg": "^8.20.0"
+  }
+}

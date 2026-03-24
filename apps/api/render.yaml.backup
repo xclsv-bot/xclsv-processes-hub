@@ -4,13 +4,8 @@ services:
     runtime: node
     region: ohio
     plan: free
-    buildCommand: |
-      echo "Build started: $(date)"
-      pnpm install --frozen-lockfile
-      pnpm db:generate
-      pnpm --filter @xclsv/api build
-      echo "Build completed: $(date)"
-    startCommand: node apps/api/dist/main.js
+    buildCommand: pnpm install && pnpm build
+    startCommand: node dist/main.js
     envVars:
       - key: DATABASE_URL
         sync: false

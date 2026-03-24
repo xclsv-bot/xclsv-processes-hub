@@ -6,14 +6,23 @@
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
+    "clean": "pnpm -r exec rimraf dist .next",
     "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r exec tsc --noEmit",
     "db:generate": "pnpm --filter @xclsv/database generate",
     "db:push": "pnpm --filter @xclsv/database push",
-    "db:migrate": "pnpm --filter @xclsv/database migrate",
+    "db:migrate:create": "pnpm --filter @xclsv/database migrate:create",
+    "db:migrate:apply": "pnpm --filter @xclsv/database migrate:apply",
+    "db:migrate:deploy": "pnpm --filter @xclsv/database migrate:deploy",
+    "db:seed": "tsx packages/database/prisma/seed.ts",
     "db:studio": "pnpm --filter @xclsv/database studio"
   },
   "devDependencies": {
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "tsx": "^4.7.0",
+    "ts-node": "^10.9.2",
+    "@types/node": "^20.10.0",
+    "rimraf": "^6.0.0"
   },
   "dependencies": {
     "pg": "^8.20.0"
