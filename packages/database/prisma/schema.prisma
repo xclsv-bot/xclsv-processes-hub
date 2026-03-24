@@ -24,6 +24,7 @@ model User {
   createdVersions ProcessVersion[]    @relation("VersionCreator")
   refreshTokens   RefreshToken[]
   activities      UserActivity[]
+  uploadedMedia   Media[]             @relation("MediaUploader")
 
   @@index([email])
   @@index([role])
@@ -48,8 +49,8 @@ model Process {
   id                      String              @id @default(uuid())
   title                   String
   slug                    String              @unique
-  description             String?
-  content                 String?
+  description             String?             @db.Text
+  content                 String?             @db.Text
   status                  ProcessStatus       @default(DRAFT)
   area                    ProcessArea
   currentVersion          Int                 @default(1)
@@ -71,6 +72,7 @@ model Process {
   relatedTo               ProcessRelation[]   @relation("RelatedTo")
   tags                    ProcessTag[]
   versions                ProcessVersion[]
+  media                   Media[]
 
   @@index([ownerId])
   @@index([area])
@@ -82,19 +84,19 @@ model Process {
 }
 
 model ProcessVersion {
-  id            String   @id @default(uuid())
-  processId     String
-  versionNumber Int
-  title         String
-  content       String
-  snapshot      Json
-  changeNotes   String?
-  createdById   String
-  createdAt     DateTime @default(now())
-  createdBy     User     @relation("VersionCreator", fields: [createdById], references: [id])
-  process       Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  processId   String
+  version     Int
+  title       String
+  content     String   @db.Text
+  snapshot    Json?
+  changeNotes String?
+  createdById String
+  createdAt   DateTime @default(now())
+  createdBy   User     @relation("VersionCreator", fields: [createdById], references: [id])
+  process     Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
 
-  @@unique([processId, versionNumber])
+  @@unique([processId, version])
   @@index([processId])
   @@index([createdById])
 }
@@ -107,6 +109,7 @@ model ProcessPermission {
   canEdit    Boolean  @default(false)
   canDelete  Boolean  @default(false)
   canPublish Boolean  @default(false)
+  canVerify  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   process    Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
@@ -160,7 +163,7 @@ model Comment {
   id         String    @id @default(uuid())
   processId  String
   userId     String
-  content    String
+  content    String    @db.Text
   parentId   String?
   isResolved Boolean   @default(false)
   resolvedAt DateTime?
@@ -221,11 +224,15 @@ model Media {
   url          String
   thumbnailUrl String?
   uploadedById String?
+  uploadedBy   User?     @relation("MediaUploader", fields: [uploadedById], references: [id])
+  processId    String?
+  process      Process?  @relation(fields: [processId], references: [id], onDelete: SetNull)
   metadata     Json?
   createdAt    DateTime  @default(now())
   deletedAt    DateTime?
 
   @@index([uploadedById])
+  @@index([processId])
   @@index([mimeType])
   @@index([deletedAt])
 }
@@ -260,22 +267,20 @@ enum UserRole {
 
 enum ProcessStatus {
   DRAFT
-  IN_REVIEW
+  REVIEW
   PUBLISHED
   ARCHIVED
 }
 
 enum ProcessArea {
-  PARTNERSHIPS
-  EVENT_SCHEDULING
-  EVENT_MARKETPLACE
-  AMBASSADOR_RECRUITMENT
-  AMBASSADOR_MANAGEMENT
+  EVENTS
+  INFLUENCER
+  PARTNERS
+  CRM
   OPERATIONS
-  CLIENT_MANAGEMENT
-  FINANCES
-  AFFILIATE_MANAGEMENT
-  PRODUCT_DEVELOPMENT
+  FINANCE
+  HR
+  GENERAL
 }
 
 enum AuditOperation {
@@ -285,10 +290,15 @@ enum AuditOperation {
   PUBLISH
   ARCHIVE
   RESTORE
+  VERIFY
+  MARK_NEEDS_REVIEW
+  TRANSFER_OWNERSHIP
+  AI_USAGE
 }
 
 enum VerificationStatus {
   PENDING
   VERIFIED
   OVERDUE
+  NEEDS_REVIEW
 }
