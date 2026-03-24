@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { StepFlow, StepEditor } from '@/components/steps';
+import { StepFlow, StepEditor, StepFlowchart } from '@/components/steps';
 
 interface StepOwner {
   id: string;
@@ -65,7 +65,7 @@ export default function ProcessDetailPage() {
   const [users, setUsers] = useState<StepOwner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [viewMode, setViewMode] = useState<'steps' | 'markdown'>('steps');
+  const [viewMode, setViewMode] = useState<'steps' | 'flowchart' | 'markdown'>('steps');
   const [showAddStep, setShowAddStep] = useState(false);
 
   useEffect(() => {
@@ -186,8 +186,8 @@ export default function ProcessDetailPage() {
           )}
         </div>
 
-        {/* View Toggle (only if both steps and content exist) */}
-        {hasSteps && hasContent && (
+        {/* View Toggle */}
+        {hasSteps && (
           <div className="mb-4 flex gap-2">
             <button
               onClick={() => setViewMode('steps')}
@@ -197,25 +197,51 @@ export default function ProcessDetailPage() {
                   : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
               }`}
             >
-              📋 Steps ({stepsData.totalSteps})
+              📋 Steps ({stepsData?.totalSteps || 0})
             </button>
             <button
-              onClick={() => setViewMode('markdown')}
+              onClick={() => setViewMode('flowchart')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'markdown'
+                viewMode === 'flowchart'
                   ? 'bg-blue-600 text-white'
                   : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
               }`}
             >
-              📄 Document
+              🔀 Flowchart
             </button>
+            {hasContent && (
+              <button
+                onClick={() => setViewMode('markdown')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'markdown'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                📄 Document
+              </button>
+            )}
           </div>
         )}
 
         {/* Content */}
         <div className="bg-white rounded-lg shadow p-6 md:p-8">
+          {/* Flowchart View */}
+          {viewMode === 'flowchart' && stepsData && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-gray-900">Process Flowchart</h2>
+              </div>
+              <StepFlowchart
+                steps={stepsData.steps}
+                handoffPoints={stepsData.handoffPoints}
+                title={process.title}
+              />
+            </div>
+          )}
+
           {/* Steps View */}
-          {(viewMode === 'steps' || !hasContent) && (
+          {(viewMode === 'steps' || (!hasContent && viewMode !== 'flowchart')) && (
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-gray-900">Process Steps</h2>
