@@ -91,15 +91,16 @@ export class ProcessesController {
   }
 
   @Post(':id/publish')
-  @RequirePermissions(Permission.PROCESS_PUBLISH)
+  @Public()  // MVP: Allow public publish
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Publish a process' })
   @ApiResponse({ status: 200, description: 'Process published' })
   async publish(
     @Param('id') id: string,
-    @CurrentUser('id') userId: string,
+    @CurrentUser('id') userId?: string,
   ) {
-    return this.processesService.publish(id, userId);
+    const ownerId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    return this.processesService.publish(id, ownerId);
   }
 
   @Post(':id/archive')

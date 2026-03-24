@@ -68,6 +68,20 @@ export default function ProcessDetailPage() {
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState<'steps' | 'flowchart' | 'markdown'>('steps');
   const [showAddStep, setShowAddStep] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+
+  const handlePublish = async () => {
+    if (!process) return;
+    setPublishing(true);
+    try {
+      const res = await api.post(`/processes/${params.id}/publish`);
+      setProcess(res.data.data || res.data);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to publish');
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -152,13 +166,32 @@ export default function ProcessDetailPage() {
                 <p className="mt-2 text-gray-600">{process.description}</p>
               )}
             </div>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              process.status === 'PUBLISHED' ? 'bg-green-100 text-green-800' :
-              process.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-gray-100 text-gray-800'
-            }`}>
-              {process.status}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                process.status === 'PUBLISHED' ? 'bg-green-100 text-green-800' :
+                process.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {process.status}
+              </span>
+              
+              {process.status === 'DRAFT' && (
+                <button
+                  onClick={handlePublish}
+                  disabled={publishing}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
+                >
+                  {publishing ? 'Publishing...' : 'Publish'}
+                </button>
+              )}
+              
+              <button
+                onClick={() => router.push(`/processes/${params.id}/edit`)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+              >
+                Edit
+              </button>
+            </div>
           </div>
 
           {/* Meta info */}
