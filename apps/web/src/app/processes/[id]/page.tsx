@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { StepFlow, StepEditor, StepFlowchart } from '@/components/steps';
+import { RelatedDocuments } from '@/components/relations';
 
 interface StepOwner {
   id: string;
@@ -330,6 +331,9 @@ export default function ProcessDetailPage() {
             </article>
           )}
         </div>
+
+        {/* Related Documents Section */}
+        <RelatedDocuments processId={process.id} />
       </div>
     </div>
   );
