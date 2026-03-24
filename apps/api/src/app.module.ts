@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { CacheModule } from './modules/cache/cache.module';
+import { AuthorizationModule } from './modules/authorization';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -37,6 +38,7 @@ import { SearchModule } from './modules/search/search.module';
 
     // Global modules
     CacheModule,
+    AuthorizationModule,
 
     // Feature modules
     HealthModule,
