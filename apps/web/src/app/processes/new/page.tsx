@@ -171,7 +171,7 @@ export default function NewProcessPage() {
             <FileUpload
               onUpload={handleFileUpload}
               onRemove={handleFileRemove}
-              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.md,.markdown"
               maxSize={10}
               multiple
             />
