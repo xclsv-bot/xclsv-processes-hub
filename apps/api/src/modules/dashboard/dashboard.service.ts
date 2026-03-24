@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { prisma } from '@xclsv/database';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export interface DashboardStats {
   totalProcesses: number;
@@ -98,7 +100,7 @@ export class DashboardService {
 
     return audits.map(a => ({
       id: a.id,
-      type: a.operation.toLowerCase() as any,
+      type: a.operation.toLowerCase() as 'created' | 'updated' | 'published',
       processId: a.entityId,
       processTitle: processMap.get(a.entityId) || 'Unknown',
       userId: a.userId,
@@ -155,18 +157,20 @@ export class DashboardService {
   }
 
   async getMyRecentProcesses(userId: string, limit: number = 10) {
-    // Get recently viewed/edited processes
     const activities = await prisma.userActivity.findMany({
       where: {
         userId,
         entityType: 'Process',
+        entityId: { not: null },
       },
       orderBy: { createdAt: 'desc' },
-      take: limit * 2, // Get more to dedupe
+      take: limit * 2,
       distinct: ['entityId'],
     });
 
-    const processIds = activities.map(a => a.entityId);
+    const processIds = activities
+      .map(a => a.entityId)
+      .filter((id): id is string => id !== null);
     
     const processes = await prisma.process.findMany({
       where: {
@@ -178,7 +182,6 @@ export class DashboardService {
       },
     });
 
-    // Sort by activity order
     const processMap = new Map(processes.map(p => [p.id, p]));
     return processIds
       .map(id => processMap.get(id))
