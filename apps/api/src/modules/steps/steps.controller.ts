@@ -69,7 +69,6 @@ export class StepsController {
   }
 
   @Put(':stepId')
-  @Roles('ADMIN', 'MANAGER', 'EDITOR')
   @ApiOperation({ summary: 'Update a step' })
   @ApiParam({ name: 'processId', description: 'Process ID' })
   @ApiParam({ name: 'stepId', description: 'Step ID' })
@@ -87,7 +86,6 @@ export class StepsController {
   }
 
   @Delete(':stepId')
-  // @Roles('ADMIN', 'MANAGER')  // MVP: disabled
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a step' })
   @ApiParam({ name: 'processId', description: 'Process ID' })
@@ -104,7 +102,6 @@ export class StepsController {
   }
 
   @Patch('reorder')
-  // @Roles('ADMIN', 'MANAGER', 'EDITOR')  // MVP: disabled
   @ApiOperation({ summary: 'Reorder steps (atomic operation)' })
   @ApiParam({ name: 'processId', description: 'Process ID' })
   @ApiResponse({ status: 200, description: 'Steps reordered successfully', type: StepsListResponseDto })
@@ -118,7 +115,6 @@ export class StepsController {
     const result = await this.stepsService.reorder(processId, dto, userId);
     return { data: result };
   }
-}
 
   // Step Documents endpoints
   @Post(':stepId/documents')
