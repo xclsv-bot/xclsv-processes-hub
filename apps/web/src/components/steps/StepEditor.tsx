@@ -33,7 +33,7 @@ interface StepEditorProps {
   isNew?: boolean;
 }
 
-export default function StepEditor({
+export function StepEditor({
   step,
   availableOwners,
   availableTools,
