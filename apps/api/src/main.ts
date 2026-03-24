@@ -3,9 +3,13 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './common/filters';
+import { LoggingInterceptor, TransformInterceptor, IdempotencyInterceptor } from './common/interceptors';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
 
   // Security
   app.use(helmet());
@@ -21,7 +25,7 @@ async function bootstrap() {
     prefix: 'api/v',
   });
 
-  // Global validation pipe
+  // Global pipes
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -33,12 +37,23 @@ async function bootstrap() {
     }),
   );
 
+  // Global filters
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
+  // Global interceptors
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new IdempotencyInterceptor(),
+    new TransformInterceptor(),
+  );
+
   // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('XCLSV Process Hub API')
     .setDescription('API for managing operational processes and documentation')
     .setVersion('1.0')
     .addBearerAuth()
+    .addApiKey({ type: 'apiKey', name: 'X-Idempotency-Key', in: 'header' }, 'idempotency-key')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
