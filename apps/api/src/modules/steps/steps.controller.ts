@@ -21,13 +21,14 @@ import { CreateStepDto, UpdateStepDto, ReorderStepsDto, StepResponseDto, StepsLi
 
 @ApiTags('Process Steps')
 @Controller('processes/:processId/steps')
-@UseGuards(JwtAuthGuard, RolesGuard)
+// MVP: Auth disabled for internal use
+// @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class StepsController {
   constructor(private readonly stepsService: StepsService) {}
 
   @Post()
-  @Roles('ADMIN', 'MANAGER', 'EDITOR')
+  // @Roles('ADMIN', 'MANAGER', 'EDITOR')  // MVP: disabled
   @ApiOperation({ summary: 'Create a new step for a process' })
   @ApiParam({ name: 'processId', description: 'Process ID' })
   @ApiResponse({ status: 201, description: 'Step created successfully', type: StepResponseDto })
@@ -35,9 +36,11 @@ export class StepsController {
   async create(
     @Param('processId') processId: string,
     @Body() dto: CreateStepDto,
-    @Request() req: { user: { id: string } },
+    @Request() req?: { user?: { id: string } },
   ): Promise<{ data: StepResponseDto }> {
-    const step = await this.stepsService.create(processId, dto, req.user.id);
+    // MVP: Default to Z's user if no auth
+    const userId = req?.user?.id || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    const step = await this.stepsService.create(processId, dto, userId);
     return { data: step };
   }
 
@@ -76,14 +79,15 @@ export class StepsController {
     @Param('processId') processId: string,
     @Param('stepId') stepId: string,
     @Body() dto: UpdateStepDto,
-    @Request() req: { user: { id: string } },
+    @Request() req?: { user?: { id: string } },
   ): Promise<{ data: StepResponseDto }> {
-    const step = await this.stepsService.update(processId, stepId, dto, req.user.id);
+    const userId = req?.user?.id || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    const step = await this.stepsService.update(processId, stepId, dto, userId);
     return { data: step };
   }
 
   @Delete(':stepId')
-  @Roles('ADMIN', 'MANAGER')
+  // @Roles('ADMIN', 'MANAGER')  // MVP: disabled
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a step' })
   @ApiParam({ name: 'processId', description: 'Process ID' })
@@ -93,13 +97,14 @@ export class StepsController {
   async remove(
     @Param('processId') processId: string,
     @Param('stepId') stepId: string,
-    @Request() req: { user: { id: string } },
+    @Request() req?: { user?: { id: string } },
   ): Promise<void> {
-    await this.stepsService.remove(processId, stepId, req.user.id);
+    const userId = req?.user?.id || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    await this.stepsService.remove(processId, stepId, userId);
   }
 
   @Patch('reorder')
-  @Roles('ADMIN', 'MANAGER', 'EDITOR')
+  // @Roles('ADMIN', 'MANAGER', 'EDITOR')  // MVP: disabled
   @ApiOperation({ summary: 'Reorder steps (atomic operation)' })
   @ApiParam({ name: 'processId', description: 'Process ID' })
   @ApiResponse({ status: 200, description: 'Steps reordered successfully', type: StepsListResponseDto })
@@ -107,9 +112,10 @@ export class StepsController {
   async reorder(
     @Param('processId') processId: string,
     @Body() dto: ReorderStepsDto,
-    @Request() req: { user: { id: string } },
+    @Request() req?: { user?: { id: string } },
   ): Promise<{ data: StepsListResponseDto }> {
-    const result = await this.stepsService.reorder(processId, dto, req.user.id);
+    const userId = req?.user?.id || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    const result = await this.stepsService.reorder(processId, dto, userId);
     return { data: result };
   }
 }
