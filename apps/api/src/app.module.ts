@@ -24,6 +24,7 @@ import { AccessAuditModule } from './modules/access-audit/access-audit.module';
 import { StepsModule } from './modules/steps/steps.module';
 import { ToolsModule } from './modules/tools/tools.module';
 import { DiagramsModule } from './modules/diagrams/diagrams.module';
+import { CommentsModule } from './modules/comments/comments.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { DiagramsModule } from './modules/diagrams/diagrams.module';
     StepsModule,
     ToolsModule,
     DiagramsModule,
+    CommentsModule,
   ],
 })
 export class AppModule {}

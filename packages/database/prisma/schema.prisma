@@ -25,8 +25,10 @@ model User {
   createdVersions ProcessVersion[]    @relation("VersionCreator")
   refreshTokens   RefreshToken[]
   activities      UserActivity[]
-  uploadedMedia   Media[]             @relation("MediaUploader")
-  stepOwnerships  StepOwner[]
+  uploadedMedia      Media[]             @relation("MediaUploader")
+  stepOwnerships     StepOwner[]
+  mentionedInComments CommentMention[]   @relation("MentionedInComments")
+  commentEdits       CommentEdit[]       @relation("CommentEdits")
 
   @@index([email])
   @@index([role])
@@ -225,25 +227,54 @@ model ProcessTag {
 }
 
 model Comment {
-  id         String    @id @default(uuid())
-  processId  String
-  userId     String
-  content    String    @db.Text
-  parentId   String?
-  isResolved Boolean   @default(false)
-  resolvedAt DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime?
-  parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies    Comment[] @relation("CommentReplies")
-  process    Process   @relation(fields: [processId], references: [id], onDelete: Cascade)
-  user       User      @relation(fields: [userId], references: [id])
+  id          String          @id @default(uuid())
+  processId   String
+  userId      String
+  content     String          @db.Text
+  parentId    String?
+  isResolved  Boolean         @default(false)
+  resolvedAt  DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+  parent      Comment?        @relation("CommentReplies", fields: [parentId], references: [id])
+  replies     Comment[]       @relation("CommentReplies")
+  process     Process         @relation(fields: [processId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id])
+  mentions    CommentMention[]
+  editHistory CommentEdit[]
 
   @@index([processId])
   @@index([userId])
   @@index([parentId])
   @@index([deletedAt])
+}
+
+model CommentMention {
+  id              String   @id @default(uuid())
+  commentId       String
+  mentionedUserId String
+  createdAt       DateTime @default(now())
+  comment         Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  mentionedUser   User     @relation("MentionedInComments", fields: [mentionedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, mentionedUserId])
+  @@index([commentId])
+  @@index([mentionedUserId])
+}
+
+model CommentEdit {
+  id              String   @id @default(uuid())
+  commentId       String
+  previousContent String   @db.Text
+  editedById      String
+  createdAt       DateTime @default(now())
+  comment         Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  editedBy        User     @relation("CommentEdits", fields: [editedById], references: [id])
+
+  @@index([commentId])
+  @@index([editedById])
+  @@index([createdAt])
 }
 
 model AuditLog {
