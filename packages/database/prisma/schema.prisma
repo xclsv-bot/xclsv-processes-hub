@@ -357,3 +357,29 @@ model DefaultRole {
   
   createdAt   DateTime @default(now())
 }
+
+// =============================================================================
+// VECTOR SEARCH (pgvector)
+// =============================================================================
+
+// Note: Requires pgvector extension enabled in PostgreSQL
+// Run: CREATE EXTENSION IF NOT EXISTS vector;
+
+model ProcessEmbedding {
+  id          String   @id @default(uuid())
+  processId   String   @unique
+  process     Process  @relation(fields: [processId], references: [id], onDelete: Cascade)
+  
+  // Vector embedding (1536 dimensions for OpenAI ada-002)
+  // Stored as array, converted to vector type via raw SQL
+  embedding   Float[]
+  
+  // Metadata
+  model       String   @default("text-embedding-ada-002") // Model used for embedding
+  version     Int      @default(1) // Embedding version for re-indexing
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([processId])
+}
