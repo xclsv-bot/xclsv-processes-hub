@@ -19,6 +19,11 @@ export enum ProcessStatus {
   ARCHIVED = 'ARCHIVED',
 }
 
+export enum ProcessType {
+  PROCESS = 'PROCESS',
+  DOCUMENT = 'DOCUMENT',
+}
+
 export class CreateProcessDto {
   @ApiProperty({ example: 'Ambassador Onboarding Process' })
   @IsString()
@@ -40,6 +45,11 @@ export class CreateProcessDto {
   @ApiProperty({ enum: ProcessArea, example: ProcessArea.EVENTS })
   @IsEnum(ProcessArea)
   area: ProcessArea;
+
+  @ApiPropertyOptional({ enum: ProcessType, example: ProcessType.PROCESS })
+  @IsOptional()
+  @IsEnum(ProcessType)
+  type?: ProcessType;
 
   @ApiPropertyOptional({ type: Object, example: { priority: 'high' } })
   @IsOptional()

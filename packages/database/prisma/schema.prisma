@@ -55,6 +55,7 @@ model Process {
   slug                    String              @unique
   description             String?             @db.Text
   content                 String?             @db.Text
+  type                    ProcessType         @default(PROCESS)
   status                  ProcessStatus       @default(DRAFT)
   area                    ProcessArea
   currentVersion          Int                 @default(1)
@@ -83,6 +84,7 @@ model Process {
   @@index([ownerId])
   @@index([area])
   @@index([status])
+  @@index([type])
   @@index([slug])
   @@index([deletedAt])
   @@index([verificationDueAt])
@@ -399,6 +401,11 @@ enum VerificationStatus {
   VERIFIED
   OVERDUE
   NEEDS_REVIEW
+}
+
+enum ProcessType {
+  PROCESS
+  DOCUMENT
 }
 
 model StepDocument {

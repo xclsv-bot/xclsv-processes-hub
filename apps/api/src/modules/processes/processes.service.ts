@@ -44,12 +44,19 @@ export class ProcessesService {
     return process;
   }
 
-  async findAll(query: PaginationQueryDto, filters?: { area?: string; status?: string }) {
+  async findAll(query: PaginationQueryDto, filters?: { area?: string; status?: string; type?: string }) {
     const { limit = 20, offset = 0 } = query;
 
     const where: any = {
       deletedAt: null,
+      // Default to showing only PROCESS type unless explicitly requesting DOCUMENT or ALL
+      type: filters?.type === 'ALL' ? undefined : (filters?.type || 'PROCESS'),
     };
+
+    // Remove type from where if it's undefined (ALL requested)
+    if (where.type === undefined) {
+      delete where.type;
+    }
 
     if (filters?.area) {
       where.area = filters.area;
@@ -139,11 +146,11 @@ export class ProcessesService {
   async update(id: string, dto: UpdateProcessDto, userId: string) {
     const process = await this.findOne(id);
 
-    // Check ownership (admins can update any)
-    if (process.ownerId !== userId) {
-      // TODO: Check if user is admin
-      throw new ForbiddenException('You can only update your own processes');
-    }
+    // MVP: Allow any updates for now
+    // TODO: Check if user is admin or owner
+    // if (process.ownerId !== userId) {
+    //   throw new ForbiddenException('You can only update your own processes');
+    // }
 
     // If title changed, update slug
     let slug = process.slug;

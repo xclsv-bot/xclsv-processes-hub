@@ -18,7 +18,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { ProcessesService } from './processes.service';
-import { CreateProcessDto, UpdateProcessDto, ProcessResponseDto, ProcessArea, ProcessStatus } from './dto';
+import { CreateProcessDto, UpdateProcessDto, ProcessResponseDto, ProcessArea, ProcessStatus, ProcessType } from './dto';
 import { PaginationQueryDto } from '@/common/dto/pagination.dto';
 import { Public, CurrentUser } from '@/common/decorators';
 import { RequirePermissions } from '@/modules/authorization';
@@ -47,13 +47,15 @@ export class ProcessesController {
   @ApiOperation({ summary: 'List all processes with pagination' })
   @ApiQuery({ name: 'area', required: false, enum: ProcessArea })
   @ApiQuery({ name: 'status', required: false, enum: ProcessStatus })
+  @ApiQuery({ name: 'type', required: false, enum: ProcessType, description: 'Filter by type (PROCESS or DOCUMENT). Default: PROCESS. Use ALL to show both.' })
   @ApiResponse({ status: 200, description: 'Paginated list of processes' })
   async findAll(
     @Query() query: PaginationQueryDto,
     @Query('area') area?: ProcessArea,
     @Query('status') status?: ProcessStatus,
+    @Query('type') type?: string,
   ) {
-    return this.processesService.findAll(query, { area, status });
+    return this.processesService.findAll(query, { area, status, type });
   }
 
   @Get(':id')
