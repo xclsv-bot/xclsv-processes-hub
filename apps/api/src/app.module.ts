@@ -17,6 +17,10 @@ import { VerificationModule } from './modules/verification/verification.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { WorkflowsModule } from './modules/workflows/workflows.module';
 import { FlagsModule } from './modules/flags/flags.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
+import { AccessRequestsModule } from './modules/access-requests/access-requests.module';
+import { AccessAuditModule } from './modules/access-audit/access-audit.module';
 
 @Module({
   imports: [
@@ -45,6 +49,10 @@ import { FlagsModule } from './modules/flags/flags.module';
     VerificationModule,
     WorkflowsModule,
     FlagsModule,
+    RolesModule,
+    PermissionsModule,
+    AccessRequestsModule,
+    AccessAuditModule,
   ],
 })
 export class AppModule {}
