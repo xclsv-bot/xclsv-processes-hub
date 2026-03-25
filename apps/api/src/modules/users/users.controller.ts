@@ -1,18 +1,46 @@
 import { Controller, Get, Post, Put, Body, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsEmail, IsOptional, IsEnum } from 'class-validator';
 import { UsersService } from './users.service';
 import { Public } from '@/common/decorators';
 
+enum UserRole {
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  EDITOR = 'EDITOR',
+  VIEWER = 'VIEWER',
+}
+
 class CreateUserDto {
+  @ApiProperty()
+  @IsString()
   name: string;
+
+  @ApiProperty()
+  @IsEmail()
   email: string;
-  role?: string;
+
+  @ApiPropertyOptional({ enum: UserRole })
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole;
 }
 
 class UpdateUserDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   name?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEmail()
   email?: string;
-  role?: string;
+
+  @ApiPropertyOptional({ enum: UserRole })
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole;
 }
 
 @ApiTags('Users')
