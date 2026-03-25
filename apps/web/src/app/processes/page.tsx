@@ -18,6 +18,7 @@ interface Process {
   description: string;
   area: string;
   status: string;
+  type: 'PROCESS' | 'DOCUMENT';
   owner: Owner;
 }
 
@@ -32,6 +33,65 @@ const AREAS = [
   'GENERAL',
 ];
 
+function ProcessCard({ 
+  process, 
+  onEdit, 
+  onDelete, 
+  isDeleting 
+}: { 
+  process: Process; 
+  onEdit: (e: React.MouseEvent, id: string) => void;
+  onDelete: (e: React.MouseEvent, id: string, title: string) => void;
+  isDeleting: boolean;
+}) {
+  return (
+    <div className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow">
+      <div className="flex justify-between items-start">
+        <Link href={`/processes/${process.id}`} className="flex-1">
+          <h3 className="text-lg font-semibold hover:text-primary-600">
+            {process.title}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
+            {process.description || 'No description'}
+          </p>
+          {process.owner && (
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+              Owner: {process.owner.name}
+            </p>
+          )}
+        </Link>
+
+        <div className="flex items-center gap-2 ml-4">
+          <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">
+            {process.area}
+          </span>
+
+          <button
+            onClick={(e) => onEdit(e, process.id)}
+            className="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            title="Edit"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+
+          <button
+            onClick={(e) => onDelete(e, process.id, process.title)}
+            className="p-2 text-gray-500 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            title="Delete"
+            disabled={isDeleting}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProcessesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,19 +100,21 @@ function ProcessesContent() {
   // Initialize filters from URL params
   const [areaFilter, setAreaFilter] = useState<string>(searchParams.get('area') || '');
   const [ownerFilter, setOwnerFilter] = useState<string>(searchParams.get('owner') || '');
+  const [typeFilter, setTypeFilter] = useState<string>(searchParams.get('type') || '');
 
   // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams();
     if (areaFilter) params.set('area', areaFilter);
     if (ownerFilter) params.set('owner', ownerFilter);
+    if (typeFilter) params.set('type', typeFilter);
     
     const queryString = params.toString();
     const newUrl = queryString ? `/processes?${queryString}` : '/processes';
     
     // Use replaceState to update URL without adding to history
     window.history.replaceState(null, '', newUrl);
-  }, [areaFilter, ownerFilter]);
+  }, [areaFilter, ownerFilter, typeFilter]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['processes', areaFilter],
@@ -101,11 +163,16 @@ function ProcessesContent() {
   // Use all users for the owner filter dropdown (not just owners from current page)
   const uniqueOwners = allUsers || [];
 
-  // Apply owner filter client-side (API doesn't support it yet)
+  // Apply filters client-side
   const filteredData = data?.filter((p) => {
     if (ownerFilter && p.owner?.id !== ownerFilter) return false;
+    if (typeFilter && p.type !== typeFilter) return false;
     return true;
   });
+
+  // Separate into processes and documents for display
+  const processes = filteredData?.filter(p => p.type !== 'DOCUMENT') || [];
+  const documents = filteredData?.filter(p => p.type === 'DOCUMENT') || [];
 
   return (
     <main className="min-h-screen p-8">
@@ -158,11 +225,27 @@ function ProcessesContent() {
             </select>
           </div>
 
-          {(areaFilter || ownerFilter) && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Type
+            </label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm min-w-[150px]"
+            >
+              <option value="">All Types</option>
+              <option value="PROCESS">Processes</option>
+              <option value="DOCUMENT">Documents</option>
+            </select>
+          </div>
+
+          {(areaFilter || ownerFilter || typeFilter) && (
             <button
               onClick={() => {
                 setAreaFilter('');
                 setOwnerFilter('');
+                setTypeFilter('');
                 // Clear URL params
                 window.history.replaceState(null, '', '/processes');
               }}
@@ -188,77 +271,45 @@ function ProcessesContent() {
           </div>
         )}
 
-        {filteredData && filteredData.length > 0 && (
-          <div className="grid gap-4">
-            {filteredData.map((process) => (
-              <div
-                key={process.id}
-                className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow"
-              >
-                <div className="flex justify-between items-start">
-                  <Link href={`/processes/${process.id}`} className="flex-1">
-                    <h2 className="text-xl font-semibold hover:text-primary-600">
-                      {process.title}
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">
-                      {process.description || 'No description'}
-                    </p>
-                    {process.owner && (
-                      <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-                        Owner: {process.owner.name}
-                      </p>
-                    )}
-                  </Link>
+        {/* Processes Section */}
+        {processes.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <span className="text-2xl">📋</span> Processes
+              <span className="text-sm font-normal text-gray-500">({processes.length})</span>
+            </h2>
+            <div className="grid gap-4">
+              {processes.map((process) => (
+                <ProcessCard 
+                  key={process.id} 
+                  process={process} 
+                  onEdit={handleEdit} 
+                  onDelete={handleDelete}
+                  isDeleting={deleteMutation.isPending}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
-                  <div className="flex items-center gap-2 ml-4">
-                    <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">
-                      {process.area}
-                    </span>
-
-                    <button
-                      onClick={(e) => handleEdit(e, process.id)}
-                      className="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                      title="Edit"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
-                    </button>
-
-                    <button
-                      onClick={(e) => handleDelete(e, process.id, process.title)}
-                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                      title="Delete"
-                      disabled={deleteMutation.isPending}
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+        {/* Documents Section */}
+        {documents.length > 0 && (
+          <div>
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <span className="text-2xl">📄</span> Documents & Policies
+              <span className="text-sm font-normal text-gray-500">({documents.length})</span>
+            </h2>
+            <div className="grid gap-4">
+              {documents.map((process) => (
+                <ProcessCard 
+                  key={process.id} 
+                  process={process} 
+                  onEdit={handleEdit} 
+                  onDelete={handleDelete}
+                  isDeleting={deleteMutation.isPending}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
