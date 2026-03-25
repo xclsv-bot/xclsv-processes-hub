@@ -86,37 +86,44 @@ export class AiSearchService {
     // Use raw SQL for vector similarity search
     const embeddingStr = `[${embedding.join(',')}]`;
     
-    const results = await prisma.$queryRaw<Array<{
-      id: string;
-      title: string;
-      slug: string;
-      description: string | null;
-      content: string | null;
-      area: string;
-      similarity: number;
-    }>>`
-      SELECT 
-        p.id,
-        p.title,
-        p.slug,
-        p.description,
-        p.content,
-        p.area,
-        1 - (pe.embedding_vec <=> ${embeddingStr}::vector) as similarity
-      FROM "Process" p
-      JOIN "ProcessEmbedding" pe ON p.id = pe."processId"
-      WHERE p."deletedAt" IS NULL
-      ORDER BY pe.embedding_vec <=> ${embeddingStr}::vector
-      LIMIT ${limit}
-    `;
-    
-    // If no embeddings exist yet, fall back to keyword search
-    if (results.length === 0) {
-      this.logger.warn('No embeddings found, falling back to keyword search');
+    try {
+      const results = await prisma.$queryRawUnsafe<Array<{
+        id: string;
+        title: string;
+        slug: string;
+        description: string | null;
+        content: string | null;
+        area: string;
+        similarity: number;
+      }>>(
+        `SELECT 
+          p.id,
+          p.title,
+          p.slug,
+          p.description,
+          p.content,
+          p.area,
+          1 - (pe.embedding_vec <=> $1::vector) as similarity
+        FROM "Process" p
+        JOIN "ProcessEmbedding" pe ON p.id = pe."processId"
+        WHERE p."deletedAt" IS NULL
+        ORDER BY pe.embedding_vec <=> $1::vector
+        LIMIT $2`,
+        embeddingStr,
+        limit
+      );
+      
+      // If no embeddings exist yet, fall back to keyword search
+      if (results.length === 0) {
+        this.logger.warn('No embeddings found, falling back to keyword search');
+        return this.keywordFallback(embedding, limit);
+      }
+      
+      return results;
+    } catch (error) {
+      this.logger.error(`Vector search failed: ${error.message}`);
       return this.keywordFallback(embedding, limit);
     }
-    
-    return results;
   }
 
   /**
