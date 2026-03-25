@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { StepFlow, StepEditor, StepFlowchart, StepModal } from '@/components/steps';
+import { StepFlow, StepEditor, StepModal } from '@/components/steps';
 import { RelatedDocuments } from '@/components/relations';
 import { VersionHistory } from '@/components/versions';
 
@@ -264,18 +264,7 @@ export default function ProcessDetailPage() {
           >
             📋 Steps {hasSteps ? `(${stepsData?.totalSteps || 0})` : ''}
           </button>
-          {hasSteps && (
-            <button
-              onClick={() => setViewMode('flowchart')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'flowchart'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              🔀 Flowchart
-            </button>
-          )}
+
           {hasContent && (
             <button
               onClick={() => setViewMode('markdown')}
@@ -312,22 +301,8 @@ export default function ProcessDetailPage() {
 
         {/* Content */}
         <div className="bg-white rounded-lg shadow p-6 md:p-8">
-          {/* Flowchart View */}
-          {viewMode === 'flowchart' && stepsData && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">Process Flowchart</h2>
-              </div>
-              <StepFlowchart
-                steps={stepsData.steps}
-                handoffPoints={stepsData.handoffPoints}
-                title={process.title}
-              />
-            </div>
-          )}
-
           {/* Steps View */}
-          {(viewMode === 'steps' || (!hasContent && viewMode !== 'flowchart')) && (
+          {viewMode === 'steps' && (
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-gray-900">Process Steps</h2>
