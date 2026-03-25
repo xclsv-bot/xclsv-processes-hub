@@ -451,16 +451,34 @@ export default function ProcessDetailPage() {
                         </div>
                       ),
                       th: ({node, ...props}) => (
-                        <th className="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold" {...props} />
+                        <th className="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold text-gray-900" {...props} />
                       ),
                       td: ({node, ...props}) => (
-                        <td className="border border-gray-300 px-3 py-2" {...props} />
+                        <td className="border border-gray-300 px-3 py-2 text-gray-700" {...props} />
                       ),
                       h2: ({node, ...props}) => (
                         <h2 className="text-xl font-bold mt-6 mb-3 text-gray-900 border-b pb-2" {...props} />
                       ),
                       h3: ({node, ...props}) => (
                         <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-800" {...props} />
+                      ),
+                      h4: ({node, ...props}) => (
+                        <h4 className="text-base font-semibold mt-3 mb-1 text-gray-800" {...props} />
+                      ),
+                      p: ({node, ...props}) => (
+                        <p className="my-2 text-gray-700 leading-relaxed" {...props} />
+                      ),
+                      ul: ({node, ...props}) => (
+                        <ul className="list-disc pl-6 my-2 space-y-1 text-gray-700" {...props} />
+                      ),
+                      ol: ({node, ...props}) => (
+                        <ol className="list-decimal pl-6 my-2 space-y-1 text-gray-700" {...props} />
+                      ),
+                      li: ({node, ...props}) => (
+                        <li className="text-gray-700" {...props} />
+                      ),
+                      strong: ({node, ...props}) => (
+                        <strong className="font-semibold text-gray-900" {...props} />
                       ),
                       hr: ({node, ...props}) => (
                         <hr className="my-6 border-gray-200" {...props} />
