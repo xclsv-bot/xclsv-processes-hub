@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import Link from 'next/link';
@@ -32,7 +32,7 @@ const AREAS = [
   'GENERAL',
 ];
 
-export default function ProcessesPage() {
+function ProcessesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -263,5 +263,13 @@ export default function ProcessesPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function ProcessesPage() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading...</div>}>
+      <ProcessesContent />
+    </Suspense>
   );
 }
