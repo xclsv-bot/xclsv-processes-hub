@@ -2,9 +2,7 @@ import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AIService } from './ai.service';
 import { ProcessGeneratorService } from './process-generator.service';
-import { RequirePermissions } from '@/modules/authorization';
-import { Permission } from '@/modules/authorization/permissions';
-import { CurrentUser } from '@/common/decorators';
+import { Public } from '@/modules/auth/decorators/public.decorator';
 
 class GenerateDto {
   prompt: string;
@@ -35,78 +33,58 @@ export class AIController {
   ) {}
 
   @Post('generate')
-  @RequirePermissions(Permission.PROCESS_CREATE)
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Generate content using AI' })
-  async generate(
-    @Body() dto: GenerateDto,
-    @CurrentUser('id') userId: string,
-  ) {
+  async generate(@Body() dto: GenerateDto) {
     return this.aiService.generate(dto.prompt, {
       maxTokens: dto.maxTokens,
       temperature: dto.temperature,
-      userId,
       feature: 'custom-generate',
     });
   }
 
   @Post('improve')
-  @RequirePermissions(Permission.PROCESS_UPDATE)
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Improve existing content' })
-  async improve(
-    @Body() dto: ImproveDto,
-    @CurrentUser('id') userId: string,
-  ) {
-    return this.aiService.improveContent(dto.content, userId);
+  async improve(@Body() dto: ImproveDto) {
+    return this.aiService.improveContent(dto.content);
   }
 
   @Post('summarize')
-  @RequirePermissions(Permission.PROCESS_READ)
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Summarize content' })
-  async summarize(
-    @Body() dto: ImproveDto,
-    @CurrentUser('id') userId: string,
-  ) {
-    return this.aiService.summarize(dto.content, userId);
+  async summarize(@Body() dto: ImproveDto) {
+    return this.aiService.summarize(dto.content);
   }
 
   @Post('generate-process')
-  @RequirePermissions(Permission.PROCESS_CREATE)
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Generate a complete process document from a topic' })
-  async generateProcess(
-    @Body() dto: GenerateProcessDto,
-    @CurrentUser('id') userId: string,
-  ) {
-    return this.processGenerator.generateProcess(dto.topic, dto.area, userId);
+  async generateProcess(@Body() dto: GenerateProcessDto) {
+    return this.processGenerator.generateProcess(dto.topic, dto.area);
   }
 
   @Post('suggest-improvements')
-  @RequirePermissions(Permission.PROCESS_READ)
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get AI suggestions for improving content' })
-  async suggestImprovements(
-    @Body() dto: ImproveDto,
-    @CurrentUser('id') userId: string,
-  ) {
-    const suggestions = await this.processGenerator.suggestImprovements(dto.content, userId);
+  async suggestImprovements(@Body() dto: ImproveDto) {
+    const suggestions = await this.processGenerator.suggestImprovements(dto.content);
     return { suggestions };
   }
 
   @Post('generate-section')
-  @RequirePermissions(Permission.PROCESS_UPDATE)
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Generate a specific section for existing content' })
-  async generateSection(
-    @Body() dto: GenerateSectionDto,
-    @CurrentUser('id') userId: string,
-  ) {
+  async generateSection(@Body() dto: GenerateSectionDto) {
     const section = await this.processGenerator.generateSection(
       dto.content,
       dto.sectionType,
-      userId,
     );
     return { section };
   }
