@@ -42,10 +42,20 @@ export default function ProcessesPage() {
     queryKey: ['processes', areaFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
+      params.set('limit', '100'); // Get more processes for better filtering
       if (areaFilter) params.set('area', areaFilter);
-      const url = `/processes${params.toString() ? `?${params}` : ''}`;
+      const url = `/processes?${params}`;
       const { data } = await api.get(url);
       return data.data as Process[];
+    },
+  });
+
+  // Fetch all users for the owner filter dropdown
+  const { data: allUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const { data } = await api.get('/users');
+      return data.data as Owner[];
     },
   });
 
@@ -72,10 +82,8 @@ export default function ProcessesPage() {
     router.push(`/processes/${id}/edit`);
   };
 
-  // Get unique owners from the data for the filter dropdown
-  const uniqueOwners = data
-    ? Array.from(new Map(data.map((p) => [p.owner?.id, p.owner])).values()).filter(Boolean)
-    : [];
+  // Use all users for the owner filter dropdown (not just owners from current page)
+  const uniqueOwners = allUsers || [];
 
   // Apply owner filter client-side (API doesn't support it yet)
   const filteredData = data?.filter((p) => {
