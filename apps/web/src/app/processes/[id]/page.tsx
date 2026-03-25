@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { StepFlow, StepEditor, StepFlowchart } from '@/components/steps';
+import { StepFlow, StepEditor, StepFlowchart, StepModal } from '@/components/steps';
 import { RelatedDocuments } from '@/components/relations';
 import { VersionHistory } from '@/components/versions';
 
@@ -71,6 +71,7 @@ export default function ProcessDetailPage() {
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState<'steps' | 'flowchart' | 'markdown' | 'sop' | 'history'>('steps');
   const [showAddStep, setShowAddStep] = useState(false);
+  const [selectedStep, setSelectedStep] = useState<Step | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [generatingSop, setGeneratingSop] = useState(false);
 
@@ -132,6 +133,20 @@ export default function ProcessDetailPage() {
     const stepsRes = await api.get(`/processes/${params.id}/steps`);
     setStepsData(stepsRes.data.data);
     setShowAddStep(false);
+  };
+
+  const handleUpdateStep = async (stepId: string, data: { title: string; description?: string; ownerIds: string[]; toolIds: string[]; isHandoff: boolean }) => {
+    await api.patch(`/processes/${params.id}/steps/${stepId}`, data);
+    // Refresh steps
+    const stepsRes = await api.get(`/processes/${params.id}/steps`);
+    setStepsData(stepsRes.data.data);
+  };
+
+  const handleDeleteStep = async (stepId: string) => {
+    await api.delete(`/processes/${params.id}/steps/${stepId}`);
+    // Refresh steps
+    const stepsRes = await api.get(`/processes/${params.id}/steps`);
+    setStepsData(stepsRes.data.data);
   };
 
   if (loading) {
@@ -345,9 +360,22 @@ export default function ProcessDetailPage() {
                   steps={stepsData.steps}
                   handoffPoints={stepsData.handoffPoints}
                   editable
+                  onStepClick={(step) => setSelectedStep(step)}
                 />
               )}
             </div>
+          )}
+
+          {/* Step Edit Modal */}
+          {selectedStep && (
+            <StepModal
+              step={selectedStep}
+              availableOwners={users}
+              availableTools={tools}
+              onClose={() => setSelectedStep(null)}
+              onSave={handleUpdateStep}
+              onDelete={handleDeleteStep}
+            />
           )}
 
           {/* Markdown View */}
