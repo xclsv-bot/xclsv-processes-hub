@@ -128,7 +128,7 @@ export default function SearchPage() {
             </Card>
 
             {/* Sources */}
-            {aiResult.sources.length > 0 && (
+            {aiResult.sources && aiResult.sources.length > 0 && (
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   Sources
@@ -161,7 +161,7 @@ export default function SearchPage() {
             )}
 
             {/* Related questions */}
-            {aiResult.relatedQuestions.length > 0 && (
+            {aiResult.relatedQuestions && aiResult.relatedQuestions.length > 0 && (
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                   Related Questions
