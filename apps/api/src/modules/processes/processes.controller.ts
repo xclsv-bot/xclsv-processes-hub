@@ -127,4 +127,50 @@ export class ProcessesController {
     const ownerId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
     return this.processesService.delete(id, ownerId);
   }
+
+  // Version History Endpoints
+  @Get(':id/versions')
+  @Public()
+  @ApiOperation({ summary: 'Get version history for a process' })
+  @ApiResponse({ status: 200, description: 'List of versions' })
+  async getVersions(@Param('id') id: string) {
+    return this.processesService.getVersionHistory(id);
+  }
+
+  @Get(':id/versions/:version')
+  @Public()
+  @ApiOperation({ summary: 'Get a specific version of a process' })
+  @ApiResponse({ status: 200, description: 'Version details' })
+  async getVersion(
+    @Param('id') id: string,
+    @Param('version') version: string,
+  ) {
+    return this.processesService.getVersion(id, parseInt(version, 10));
+  }
+
+  @Get(':id/versions/:v1/compare/:v2')
+  @Public()
+  @ApiOperation({ summary: 'Compare two versions of a process' })
+  @ApiResponse({ status: 200, description: 'Version comparison' })
+  async compareVersions(
+    @Param('id') id: string,
+    @Param('v1') v1: string,
+    @Param('v2') v2: string,
+  ) {
+    return this.processesService.compareVersions(id, parseInt(v1, 10), parseInt(v2, 10));
+  }
+
+  @Post(':id/versions/:version/restore')
+  @Public()  // MVP: Allow public restore
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Restore a previous version' })
+  @ApiResponse({ status: 200, description: 'Version restored' })
+  async restoreVersion(
+    @Param('id') id: string,
+    @Param('version') version: string,
+    @CurrentUser('id') userId?: string,
+  ) {
+    const ownerId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    return this.processesService.restoreVersion(id, parseInt(version, 10), ownerId);
+  }
 }

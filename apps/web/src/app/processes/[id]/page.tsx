@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { StepFlow, StepEditor, StepFlowchart } from '@/components/steps';
 import { RelatedDocuments } from '@/components/relations';
+import { VersionHistory } from '@/components/versions';
 
 interface StepOwner {
   id: string;
@@ -46,6 +47,7 @@ interface Process {
   sopContent?: string;
   area: string;
   status: string;
+  currentVersion?: number;
   metadata?: { tags?: string[] };
   owner?: { id: string; name: string; email: string };
   createdAt: string;
@@ -67,7 +69,7 @@ export default function ProcessDetailPage() {
   const [users, setUsers] = useState<StepOwner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [viewMode, setViewMode] = useState<'steps' | 'flowchart' | 'markdown' | 'sop'>('steps');
+  const [viewMode, setViewMode] = useState<'steps' | 'flowchart' | 'markdown' | 'sop' | 'history'>('steps');
   const [showAddStep, setShowAddStep] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [generatingSop, setGeneratingSop] = useState(false);
@@ -281,6 +283,16 @@ export default function ProcessDetailPage() {
           >
             📋 SOP View
           </button>
+          <button
+            onClick={() => setViewMode('history')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'history'
+                ? 'bg-gray-800 text-white'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            📜 History
+          </button>
         </div>
 
         {/* Content */}
@@ -448,6 +460,24 @@ export default function ProcessDetailPage() {
                   </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* History View */}
+          {viewMode === 'history' && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-gray-900">Version History</h2>
+                <span className="text-sm text-gray-500">Current version: {process.currentVersion || 1}</span>
+              </div>
+              <VersionHistory
+                processId={process.id}
+                currentVersion={process.currentVersion || 1}
+                onRestore={() => {
+                  // Refresh the page data after restore
+                  window.location.reload();
+                }}
+              />
             </div>
           )}
         </div>
