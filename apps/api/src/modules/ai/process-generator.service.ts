@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AIService } from './ai.service';
-import { PrismaService } from '@/common/prisma/prisma.service';
+import { prisma } from '@xclsv/database';
 
 export interface ProcessTemplate {
   title: string;
@@ -60,10 +60,7 @@ const SOP_TEMPLATE = `## [TITLE]
 export class ProcessGeneratorService {
   private readonly logger = new Logger(ProcessGeneratorService.name);
 
-  constructor(
-    private readonly aiService: AIService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly aiService: AIService) {}
 
   async generateProcess(
     topic: string,

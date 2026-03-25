@@ -5,10 +5,8 @@ import { UsageTrackingService } from './usage-tracking.service';
 import { UsageController } from './usage.controller';
 import { ProcessGeneratorService } from './process-generator.service';
 import { TranscriptService } from './transcript.service';
-import { PrismaModule } from '@/common/prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule],
   controllers: [AIController, UsageController],
   providers: [AIService, UsageTrackingService, ProcessGeneratorService, TranscriptService],
   exports: [AIService, UsageTrackingService, ProcessGeneratorService, TranscriptService],

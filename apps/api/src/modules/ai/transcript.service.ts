@@ -1,8 +1,8 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { AIService } from './ai.service';
-import { PrismaService } from '@/common/prisma/prisma.service';
+import { prisma } from '@xclsv/database';
 
-interface GeneratedProcess {
+export interface GeneratedProcess {
   id: string;
   title: string;
   description: string;
@@ -16,10 +16,7 @@ interface GeneratedProcess {
 export class TranscriptService {
   private readonly logger = new Logger(TranscriptService.name);
 
-  constructor(
-    private readonly aiService: AIService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly aiService: AIService) {}
 
   /**
    * Process an uploaded file and extract transcript text
@@ -271,8 +268,9 @@ Create a structured process document in Markdown format with:
    */
   private async parsePDF(buffer: Buffer): Promise<string> {
     try {
-      const pdfParse = (await import('pdf-parse')).default;
-      const data = await pdfParse(buffer);
+      const pdfParse = await import('pdf-parse');
+      const parser = pdfParse.default || pdfParse;
+      const data = await parser(buffer);
       
       if (!data.text || data.text.trim().length < 10) {
         throw new Error('PDF appears to be empty or contains only images');
