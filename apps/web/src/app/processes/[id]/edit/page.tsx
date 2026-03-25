@@ -15,6 +15,12 @@ const AREAS = [
   { value: 'GENERAL', label: 'General' },
 ];
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface Process {
   id: string;
   title: string;
@@ -23,6 +29,8 @@ interface Process {
   area: string;
   status: string;
   type: string;
+  ownerId: string;
+  owner?: User;
   metadata?: { tags?: string[] };
 }
 
@@ -32,26 +40,35 @@ export default function EditProcessPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     content: '',
     area: 'GENERAL',
     type: 'PROCESS',
+    ownerId: '',
   });
 
   useEffect(() => {
-    const fetchProcess = async () => {
+    const fetchData = async () => {
       try {
-        const { data } = await api.get(`/processes/${params.id}`);
-        const process = data.data || data;
+        const [processRes, usersRes] = await Promise.all([
+          api.get(`/processes/${params.id}`),
+          api.get('/users').catch(() => ({ data: { data: [] } })),
+        ]);
+        
+        const process = processRes.data.data || processRes.data;
         setFormData({
           title: process.title || '',
           description: process.description || '',
           content: process.content || '',
           area: process.area || 'GENERAL',
           type: process.type || 'PROCESS',
+          ownerId: process.ownerId || process.owner?.id || '',
         });
+        
+        setUsers(usersRes.data.data || usersRes.data || []);
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to load process');
       } finally {
@@ -60,7 +77,7 @@ export default function EditProcessPage() {
     };
 
     if (params.id) {
-      fetchProcess();
+      fetchData();
     }
   }, [params.id]);
 
@@ -135,7 +152,7 @@ export default function EditProcessPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label htmlFor="area" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Department
@@ -166,6 +183,25 @@ export default function EditProcessPage() {
               >
                 <option value="PROCESS">Process</option>
                 <option value="DOCUMENT">Document</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="ownerId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Owner
+              </label>
+              <select
+                id="ownerId"
+                value={formData.ownerId}
+                onChange={(e) => setFormData({ ...formData, ownerId: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select owner...</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
