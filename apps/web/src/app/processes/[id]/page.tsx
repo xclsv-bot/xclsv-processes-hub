@@ -136,7 +136,7 @@ export default function ProcessDetailPage() {
   };
 
   const handleUpdateStep = async (stepId: string, data: { title: string; description?: string; ownerIds: string[]; toolIds: string[]; isHandoff: boolean }) => {
-    await api.patch(`/processes/${params.id}/steps/${stepId}`, data);
+    await api.put(`/processes/${params.id}/steps/${stepId}`, data);
     // Refresh steps
     const stepsRes = await api.get(`/processes/${params.id}/steps`);
     setStepsData(stepsRes.data.data);
