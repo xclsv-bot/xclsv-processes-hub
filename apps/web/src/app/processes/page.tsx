@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Owner {
   id: string;
@@ -34,9 +34,25 @@ const AREAS = [
 
 export default function ProcessesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const [areaFilter, setAreaFilter] = useState<string>('');
-  const [ownerFilter, setOwnerFilter] = useState<string>('');
+  
+  // Initialize filters from URL params
+  const [areaFilter, setAreaFilter] = useState<string>(searchParams.get('area') || '');
+  const [ownerFilter, setOwnerFilter] = useState<string>(searchParams.get('owner') || '');
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (areaFilter) params.set('area', areaFilter);
+    if (ownerFilter) params.set('owner', ownerFilter);
+    
+    const queryString = params.toString();
+    const newUrl = queryString ? `/processes?${queryString}` : '/processes';
+    
+    // Use replaceState to update URL without adding to history
+    window.history.replaceState(null, '', newUrl);
+  }, [areaFilter, ownerFilter]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['processes', areaFilter],
@@ -147,6 +163,8 @@ export default function ProcessesPage() {
               onClick={() => {
                 setAreaFilter('');
                 setOwnerFilter('');
+                // Clear URL params
+                window.history.replaceState(null, '', '/processes');
               }}
               className="self-end px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             >
