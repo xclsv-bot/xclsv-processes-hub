@@ -30,8 +30,9 @@ export default function SearchPage() {
   // AI Search mutation
   const aiSearchMutation = useMutation({
     mutationFn: async (searchQuery: string) => {
-      const { data } = await api.post('/search/ai', { query: searchQuery, limit: 5 });
-      return data as AiSearchResult;
+      const response = await api.post('/search/ai', { query: searchQuery, limit: 5 });
+      // API returns { data: { answer, sources, relatedQuestions } }
+      return response.data.data as AiSearchResult;
     },
     onSuccess: (data) => {
       setAiResult(data);
