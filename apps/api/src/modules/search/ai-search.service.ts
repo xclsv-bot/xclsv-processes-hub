@@ -182,14 +182,30 @@ export class AiSearchService {
         messages: [
           {
             role: 'user',
-            content: `You are a helpful assistant for XCLSV's Process Hub. Answer the user's question based on the following process documentation. Be concise and helpful. If the documentation doesn't contain the answer, say so.
+            content: `You are a helpful assistant for XCLSV's Process Hub. Answer the user's question based on the following process documentation.
 
 DOCUMENTATION:
 ${context}
 
 USER QUESTION: ${query}
 
-Provide a clear, actionable answer. Reference specific processes when relevant. Format with markdown if it helps clarity.`,
+RESPONSE FORMAT:
+- Start with a brief 1-sentence summary answering the question
+- Use **bold** for process names and key terms
+- Use numbered lists for step-by-step procedures
+- Use bullet points for lists of items
+- Include the **Owner** if mentioned in the documentation
+- Keep it concise - no filler phrases like "Based on the documentation..."
+- If info is missing, briefly note what's not covered
+
+Example good structure:
+**Ambassador Payroll** is processed weekly by Pinky.
+
+**Steps:**
+1. First step here
+2. Second step here
+
+**Owner:** Pinky`,
           },
         ],
       });
