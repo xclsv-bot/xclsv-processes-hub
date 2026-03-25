@@ -126,11 +126,11 @@ Create a structured process document in Markdown format with:
     const slug = this.generateSlug(parsed.title);
     
     // Check for duplicate slug
-    const existing = await this.prisma.process.findUnique({ where: { slug } });
+    const existing = await prisma.process.findUnique({ where: { slug } });
     const finalSlug = existing ? `${slug}-${Date.now()}` : slug;
 
     // Create the process as a draft
-    const process = await this.prisma.process.create({
+    const process = await prisma.process.create({
       data: {
         title: parsed.title,
         slug: finalSlug,
@@ -268,9 +268,9 @@ Create a structured process document in Markdown format with:
    */
   private async parsePDF(buffer: Buffer): Promise<string> {
     try {
-      const pdfParse = await import('pdf-parse');
-      const parser = pdfParse.default || pdfParse;
-      const data = await parser(buffer);
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdfParse = require('pdf-parse');
+      const data = await pdfParse(buffer);
       
       if (!data.text || data.text.trim().length < 10) {
         throw new Error('PDF appears to be empty or contains only images');

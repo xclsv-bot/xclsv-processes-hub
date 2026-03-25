@@ -35,8 +35,8 @@ export class DashboardController {
   @ApiOperation({ summary: 'Track user activity' })
   @ApiResponse({ status: 201, description: 'Activity tracked' })
   async trackActivity(
-    @CurrentUser('id') userId?: string,
     @Body() body: { processId: string; action: 'view' | 'edit' | 'search' },
+    @CurrentUser('id') userId?: string,
   ) {
     const uid = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
     await this.dashboardService.trackActivity(uid, body.processId, body.action);

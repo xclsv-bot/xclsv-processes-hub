@@ -186,7 +186,7 @@ Format the response in HTML.`;
 
   async generateAndSaveSop(processId: string): Promise<{ sopContent: string }> {
     // Fetch the process
-    const process = await this.prisma.process.findUnique({
+    const process = await prisma.process.findUnique({
       where: { id: processId },
       include: { owner: true },
     });
@@ -228,7 +228,7 @@ Be professional but concise.`;
     });
 
     // Save the SOP content
-    await this.prisma.process.update({
+    await prisma.process.update({
       where: { id: processId },
       data: { sopContent: response.content },
     });
@@ -237,7 +237,7 @@ Be professional but concise.`;
   }
 
   async generateSopForAll(): Promise<{ processed: number; errors: string[] }> {
-    const processes = await this.prisma.process.findMany({
+    const processes = await prisma.process.findMany({
       where: { 
         sopContent: null,
         content: { not: null },
