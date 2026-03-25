@@ -6,7 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import { Input, Button, Badge, Card } from '@/components/ui';
 
-const AREAS = ['EVENTS', 'INFLUENCER', 'PARTNERS', 'CRM', 'OPERATIONS', 'FINANCE', 'HR', 'GENERAL'];
+const AREAS = ['AFFILIATE', 'EVENTS', 'INFLUENCER', 'PARTNERS', 'CRM', 'OPERATIONS', 'FINANCE', 'HR', 'GENERAL'];
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');

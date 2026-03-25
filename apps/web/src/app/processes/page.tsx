@@ -23,6 +23,7 @@ interface Process {
 }
 
 const AREAS = [
+  'AFFILIATE',
   'EVENTS',
   'INFLUENCER',
   'PARTNERS',

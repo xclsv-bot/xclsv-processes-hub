@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { TranscriptUpload } from '@/components/upload';
 
 const AREAS = [
+  { value: 'AFFILIATE', label: 'Affiliate' },
   { value: 'EVENTS', label: 'Events' },
   { value: 'INFLUENCER', label: 'Influencer' },
   { value: 'PARTNERS', label: 'Partners' },

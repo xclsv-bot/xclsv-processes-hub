@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 
 const AREAS = [
+  { value: 'AFFILIATE', label: 'Affiliate' },
   { value: 'EVENTS', label: 'Events' },
   { value: 'INFLUENCER', label: 'Influencer' },
   { value: 'PARTNERS', label: 'Partners' },
