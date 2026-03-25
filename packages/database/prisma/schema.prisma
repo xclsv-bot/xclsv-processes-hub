@@ -29,10 +29,15 @@ model User {
   stepOwnerships     StepOwner[]
   mentionedInComments CommentMention[]   @relation("MentionedInComments")
   commentEdits       CommentEdit[]       @relation("CommentEdits")
+  assignedTasks      Task[]              @relation("TaskAssignee")
+  createdTasks       Task[]              @relation("TaskCreator")
+  inviteToken        String?             @unique
+  inviteExpiresAt    DateTime?
 
   @@index([email])
   @@index([role])
   @@index([deletedAt])
+  @@index([inviteToken])
 }
 
 model RefreshToken {
@@ -81,6 +86,7 @@ model Process {
   versions                ProcessVersion[]
   media                   Media[]
   steps                   ProcessStep[]
+  tasks                   Task[]
 
   @@index([ownerId])
   @@index([area])
@@ -125,6 +131,7 @@ model ProcessStep {
   owners      StepOwner[]
   tools       StepTool[]
   documents   StepDocument[]
+  tasks       Task[]
 
   @@unique([processId, sequence])
   @@index([processId])
@@ -423,4 +430,50 @@ model StepDocument {
   @@unique([stepId, documentId])
   @@index([stepId])
   @@index([documentId])
+}
+
+// Task assignment system
+model Task {
+  id          String      @id @default(uuid())
+  title       String
+  description String?     @db.Text
+  status      TaskStatus  @default(PENDING)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  completedAt DateTime?
+  
+  // Relationships
+  assigneeId  String
+  assignee    User        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdById String
+  createdBy   User        @relation("TaskCreator", fields: [createdById], references: [id])
+  
+  // Optional link to process/step
+  processId   String?
+  process     Process?    @relation(fields: [processId], references: [id], onDelete: SetNull)
+  stepId      String?
+  step        ProcessStep? @relation(fields: [stepId], references: [id], onDelete: SetNull)
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  @@index([assigneeId])
+  @@index([createdById])
+  @@index([status])
+  @@index([dueDate])
+  @@index([processId])
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }

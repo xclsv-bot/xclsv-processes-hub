@@ -23,9 +23,19 @@ export function Navbar() {
               Search
             </Link>
             {isAuthenticated && (
-              <Link href="/dashboard" className="hover:text-primary-600">
-                Dashboard
-              </Link>
+              <>
+                <Link href="/tasks" className="hover:text-primary-600">
+                  Tasks
+                </Link>
+                <Link href="/dashboard" className="hover:text-primary-600">
+                  Dashboard
+                </Link>
+                {user?.role === 'ADMIN' && (
+                  <Link href="/admin/users" className="hover:text-primary-600">
+                    Users
+                  </Link>
+                )}
+              </>
             )}
           </div>
         </div>

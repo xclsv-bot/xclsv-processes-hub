@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Put, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsEmail, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsEnum, MinLength } from 'class-validator';
 import { UsersService } from './users.service';
 import { Public } from '@/common/decorators';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { Roles } from '@/common/decorators/roles.decorator';
 
 enum UserRole {
   ADMIN = 'ADMIN',
@@ -41,6 +44,13 @@ class UpdateUserDto {
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
+}
+
+class AcceptInviteDto {
+  @ApiProperty()
+  @IsString()
+  @MinLength(8, { message: 'Password must be at least 8 characters' })
+  password: string;
 }
 
 @ApiTags('Users')
@@ -82,5 +92,43 @@ export class UsersController {
   async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     const user = await this.usersService.update(id, dto);
     return { data: user };
+  }
+
+  // Invite endpoints
+  @Post(':id/invite')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Generate invite link for existing user' })
+  async generateInvite(@Param('id') id: string) {
+    const result = await this.usersService.generateInvite(id);
+    return { data: result };
+  }
+
+  @Post('invite')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Create new user and generate invite' })
+  async inviteUser(@Body() dto: CreateUserDto) {
+    const result = await this.usersService.inviteUser(dto);
+    return { data: result };
+  }
+
+  @Get('invite/:token')
+  @Public()
+  @ApiOperation({ summary: 'Validate invite token' })
+  async validateInvite(@Param('token') token: string) {
+    const result = await this.usersService.validateInvite(token);
+    return { data: result };
+  }
+
+  @Post('invite/:token/accept')
+  @Public()
+  @ApiOperation({ summary: 'Accept invite and set password' })
+  async acceptInvite(
+    @Param('token') token: string,
+    @Body() dto: AcceptInviteDto,
+  ) {
+    const result = await this.usersService.acceptInvite(token, dto.password);
+    return { data: result };
   }
 }

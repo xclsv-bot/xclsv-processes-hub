@@ -26,6 +26,7 @@ import { ToolsModule } from './modules/tools/tools.module';
 import { DiagramsModule } from './modules/diagrams/diagrams.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { RelationsModule } from './modules/relations/relations.module';
+import { TasksModule } from './modules/tasks/tasks.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { RelationsModule } from './modules/relations/relations.module';
     DiagramsModule,
     CommentsModule,
     RelationsModule,
+    TasksModule,
   ],
 })
 export class AppModule {}
