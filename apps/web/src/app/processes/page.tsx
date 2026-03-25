@@ -122,6 +122,7 @@ function ProcessesContent() {
     queryFn: async () => {
       const params = new URLSearchParams();
       params.set('limit', '100'); // Get more processes for better filtering
+      params.set('type', 'ALL'); // Get both processes and documents
       if (areaFilter) params.set('area', areaFilter);
       const url = `/processes?${params}`;
       const { data } = await api.get(url);
