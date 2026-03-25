@@ -6,26 +6,21 @@ import {
   Delete,
   Body,
   Param,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Public } from '@/common/decorators';
 import { ToolsService } from './tools.service';
 import { CreateToolDto, ToolResponseDto } from './dto';
 
 @ApiTags('Tools')
 @Controller('tools')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
 export class ToolsController {
   constructor(private readonly toolsService: ToolsService) {}
 
   @Post()
-  @Roles('ADMIN', 'MANAGER')
+  @Public()  // MVP: Allow public creation
   @ApiOperation({ summary: 'Create a new tool' })
   @ApiResponse({ status: 201, description: 'Tool created successfully', type: ToolResponseDto })
   @ApiResponse({ status: 409, description: 'Tool already exists' })
@@ -35,6 +30,7 @@ export class ToolsController {
   }
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'Get all tools' })
   @ApiResponse({ status: 200, description: 'Tools retrieved successfully', type: [ToolResponseDto] })
   async findAll(): Promise<{ data: ToolResponseDto[] }> {
@@ -43,6 +39,7 @@ export class ToolsController {
   }
 
   @Get(':id')
+  @Public()
   @ApiOperation({ summary: 'Get a tool by ID' })
   @ApiResponse({ status: 200, description: 'Tool retrieved successfully', type: ToolResponseDto })
   @ApiResponse({ status: 404, description: 'Tool not found' })
@@ -52,7 +49,7 @@ export class ToolsController {
   }
 
   @Put(':id')
-  @Roles('ADMIN', 'MANAGER')
+  @Public()  // MVP: Allow public updates
   @ApiOperation({ summary: 'Update a tool' })
   @ApiResponse({ status: 200, description: 'Tool updated successfully', type: ToolResponseDto })
   @ApiResponse({ status: 404, description: 'Tool not found' })
@@ -65,7 +62,7 @@ export class ToolsController {
   }
 
   @Delete(':id')
-  @Roles('ADMIN')
+  @Public()  // MVP: Allow public deletes
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a tool' })
   @ApiResponse({ status: 204, description: 'Tool deleted successfully' })
@@ -75,7 +72,7 @@ export class ToolsController {
   }
 
   @Post('seed')
-  @Roles('ADMIN')
+  @Public()  // MVP: Allow public seeding
   @ApiOperation({ summary: 'Seed default XCLSV tools' })
   @ApiResponse({ status: 201, description: 'Tools seeded successfully', type: [ToolResponseDto] })
   async seed(): Promise<{ data: ToolResponseDto[]; message: string }> {
