@@ -49,15 +49,26 @@ export default function StepModal({
   onSave,
   onDelete,
 }: StepModalProps) {
-  const [title, setTitle] = useState(step.title);
-  const [description, setDescription] = useState(step.description || '');
-  const [selectedOwners, setSelectedOwners] = useState<string[]>(step.owners.map(o => o.id));
-  const [selectedTools, setSelectedTools] = useState<string[]>(step.tools.map(t => t.id));
-  const [isHandoff, setIsHandoff] = useState(step.isHandoff);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedOwners, setSelectedOwners] = useState<string[]>([]);
+  const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  const [isHandoff, setIsHandoff] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+
+  // Initialize/reset form when step changes
+  useEffect(() => {
+    setTitle(step.title || '');
+    setDescription(step.description || '');
+    setSelectedOwners(step.owners?.map(o => o.id) || []);
+    setSelectedTools(step.tools?.map(t => t.id) || []);
+    setIsHandoff(step.isHandoff || false);
+    setIsEditing(false);
+    setError('');
+  }, [step]);
 
   // Close on escape key
   useEffect(() => {
