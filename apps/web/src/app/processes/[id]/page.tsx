@@ -73,7 +73,22 @@ export default function ProcessDetailPage() {
   const [showAddStep, setShowAddStep] = useState(false);
   const [selectedStep, setSelectedStep] = useState<Step | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [generatingSop, setGeneratingSop] = useState(false);
+
+  const handleDelete = async () => {
+    if (!process) return;
+    if (!confirm(`Are you sure you want to delete "${process.title}"? This action cannot be undone.`)) return;
+    
+    setDeleting(true);
+    try {
+      await api.delete(`/processes/${params.id}`);
+      router.push('/processes');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete process');
+      setDeleting(false);
+    }
+  };
 
   const handlePublish = async () => {
     if (!process) return;
@@ -222,6 +237,14 @@ export default function ProcessDetailPage() {
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
               >
                 Edit
+              </button>
+              
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
