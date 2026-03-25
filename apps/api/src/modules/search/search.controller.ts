@@ -1,12 +1,16 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Query, Body } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { SearchService } from './search.service';
+import { AiSearchService } from './ai-search.service';
 import { Public } from '@/common/decorators';
 
 @ApiTags('Search')
 @Controller('search')
 export class SearchController {
-  constructor(private readonly searchService: SearchService) {}
+  constructor(
+    private readonly searchService: SearchService,
+    private readonly aiSearchService: AiSearchService,
+  ) {}
 
   @Get()
   @Public()
@@ -62,5 +66,45 @@ export class SearchController {
       limit: limit || 10,
       offset: offset || 0,
     });
+  }
+
+  @Post('ai')
+  @Public()
+  @ApiOperation({ summary: 'AI-assisted semantic search with natural language Q&A' })
+  @ApiBody({ 
+    schema: { 
+      type: 'object', 
+      properties: { 
+        query: { type: 'string', description: 'Natural language question' },
+        limit: { type: 'number', description: 'Max sources to retrieve (default 5)' },
+      },
+      required: ['query'],
+    } 
+  })
+  @ApiResponse({ status: 200, description: 'AI-generated answer with sources' })
+  async aiSearch(
+    @Body('query') query: string,
+    @Body('limit') limit?: number,
+  ) {
+    return this.aiSearchService.search(query, limit || 5);
+  }
+
+  @Post('embeddings/generate')
+  @Public()
+  @ApiOperation({ summary: 'Generate embeddings for all processes (admin)' })
+  @ApiResponse({ status: 200, description: 'Embedding generation results' })
+  async generateEmbeddings() {
+    return this.aiSearchService.generateAllEmbeddings();
+  }
+
+  @Post('embeddings/process/:id')
+  @Public()
+  @ApiOperation({ summary: 'Generate embedding for a single process' })
+  @ApiResponse({ status: 200, description: 'Embedding generated' })
+  async generateProcessEmbedding(
+    @Query('id') processId: string,
+  ) {
+    await this.aiSearchService.generateProcessEmbedding(processId);
+    return { success: true, processId };
   }
 }
