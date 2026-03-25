@@ -1,9 +1,7 @@
 import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
-import { RequirePermissions } from '@/modules/authorization';
-import { Permission } from '@/modules/authorization/permissions';
-import { CurrentUser } from '@/common/decorators';
+import { Public, CurrentUser } from '@/common/decorators';
 
 @ApiTags('Dashboard')
 @Controller('dashboard')
@@ -11,33 +9,37 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get()
-  @RequirePermissions(Permission.PROCESS_READ)
-  @ApiOperation({ summary: 'Get personalized dashboard' })
+  @Public()  // MVP: Allow public access
+  @ApiOperation({ summary: 'Get dashboard stats' })
   @ApiResponse({ status: 200, description: 'Dashboard data' })
-  async getDashboard(@CurrentUser('id') userId: string) {
-    return this.dashboardService.getDashboard(userId);
+  async getDashboard(@CurrentUser('id') userId?: string) {
+    // MVP: Use default user if not authenticated
+    const uid = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    return this.dashboardService.getDashboard(uid);
   }
 
   @Get('recent')
-  @RequirePermissions(Permission.PROCESS_READ)
-  @ApiOperation({ summary: 'Get my recent processes' })
+  @Public()  // MVP: Allow public access
+  @ApiOperation({ summary: 'Get recent processes' })
   @ApiResponse({ status: 200, description: 'Recent processes' })
   async getRecentProcesses(
-    @CurrentUser('id') userId: string,
+    @CurrentUser('id') userId?: string,
     @Query('limit') limit?: number,
   ) {
-    return this.dashboardService.getMyRecentProcesses(userId, limit || 10);
+    const uid = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    return this.dashboardService.getMyRecentProcesses(uid, limit || 10);
   }
 
   @Post('track')
-  @RequirePermissions(Permission.PROCESS_READ)
+  @Public()  // MVP: Allow public access
   @ApiOperation({ summary: 'Track user activity' })
   @ApiResponse({ status: 201, description: 'Activity tracked' })
   async trackActivity(
-    @CurrentUser('id') userId: string,
+    @CurrentUser('id') userId?: string,
     @Body() body: { processId: string; action: 'view' | 'edit' | 'search' },
   ) {
-    await this.dashboardService.trackActivity(userId, body.processId, body.action);
+    const uid = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    await this.dashboardService.trackActivity(uid, body.processId, body.action);
     return { success: true };
   }
 }
