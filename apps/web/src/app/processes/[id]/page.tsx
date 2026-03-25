@@ -237,29 +237,27 @@ export default function ProcessDetailPage() {
 
         {/* View Toggle */}
         <div className="mb-4 flex gap-2 flex-wrap">
+          <button
+            onClick={() => setViewMode('steps')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'steps'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            📋 Steps {hasSteps ? `(${stepsData?.totalSteps || 0})` : ''}
+          </button>
           {hasSteps && (
-            <>
-              <button
-                onClick={() => setViewMode('steps')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === 'steps'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                📋 Steps ({stepsData?.totalSteps || 0})
-              </button>
-              <button
-                onClick={() => setViewMode('flowchart')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === 'flowchart'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                🔀 Flowchart
-              </button>
-            </>
+            <button
+              onClick={() => setViewMode('flowchart')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'flowchart'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              🔀 Flowchart
+            </button>
           )}
           {hasContent && (
             <button
