@@ -374,6 +374,7 @@ enum ProcessStatus {
 }
 
 enum ProcessArea {
+  AFFILIATE
   EVENTS
   INFLUENCER
   PARTNERS
