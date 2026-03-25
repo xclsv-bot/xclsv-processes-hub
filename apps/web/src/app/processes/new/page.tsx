@@ -88,31 +88,33 @@ export default function NewProcessPage() {
               </div>
             </button>
 
-            {/* Transcript Upload */}
+            {/* Document Upload */}
             <button
               onClick={() => setMode('transcript')}
               className="bg-white rounded-lg shadow p-6 text-left hover:shadow-lg transition-shadow border-2 border-transparent hover:border-purple-500"
             >
-              <div className="text-4xl mb-4">🎙️</div>
+              <div className="text-4xl mb-4">📄</div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Upload Transcript
+                Upload Document
               </h3>
               <p className="text-sm text-gray-500">
-                Upload a meeting transcript and let AI generate the process document for you.
+                Upload a transcript, PDF, or Word doc and let AI generate a structured process.
               </p>
               <div className="mt-4 text-purple-600 font-medium text-sm">
-                Best for: Zoom calls, recorded meetings, training sessions
+                Best for: Existing SOPs, meeting transcripts, PDF docs
               </div>
             </button>
           </div>
 
           <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">💡 Supported transcript formats</h4>
+            <h4 className="font-medium text-blue-900 mb-2">💡 Supported file formats</h4>
             <div className="text-sm text-blue-700">
               <span className="font-mono bg-blue-100 px-1 rounded">.txt</span>{' '}
               <span className="font-mono bg-blue-100 px-1 rounded">.vtt</span>{' '}
               <span className="font-mono bg-blue-100 px-1 rounded">.srt</span>{' '}
-              <span className="font-mono bg-blue-100 px-1 rounded">.docx</span>
+              <span className="font-mono bg-blue-100 px-1 rounded">.doc</span>{' '}
+              <span className="font-mono bg-blue-100 px-1 rounded">.docx</span>{' '}
+              <span className="font-mono bg-blue-100 px-1 rounded">.pdf</span>
             </div>
           </div>
         </div>

@@ -15,7 +15,7 @@ const AREAS = [
   { value: 'GENERAL', label: 'General' },
 ];
 
-const SUPPORTED_FORMATS = ['txt', 'vtt', 'srt', 'docx'];
+const SUPPORTED_FORMATS = ['txt', 'vtt', 'srt', 'doc', 'docx', 'pdf'];
 
 interface Props {
   onSuccess?: (processId: string) => void;
@@ -125,7 +125,7 @@ export function TranscriptUpload({ onSuccess, onCancel }: Props) {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".txt,.vtt,.srt,.docx"
+          accept=".txt,.vtt,.srt,.doc,.docx,.pdf"
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -157,7 +157,7 @@ export function TranscriptUpload({ onSuccess, onCancel }: Props) {
               or click to browse
             </div>
             <div className="text-xs text-gray-400 mt-3">
-              Supported formats: TXT, VTT, SRT, DOCX
+              Supported formats: TXT, VTT, SRT, DOC, DOCX, PDF
             </div>
           </div>
         )}
@@ -229,7 +229,8 @@ export function TranscriptUpload({ onSuccess, onCancel }: Props) {
         <h4 className="font-medium text-gray-900 mb-2">💡 Tips</h4>
         <ul className="text-sm text-gray-600 space-y-1">
           <li>• <strong>Zoom transcripts</strong> export as VTT files</li>
-          <li>• <strong>Meeting notes</strong> work great as TXT or DOCX</li>
+          <li>• <strong>Meeting notes</strong> work great as TXT, DOCX, or PDF</li>
+          <li>• <strong>Existing SOPs</strong> can be uploaded as PDF to reformat</li>
           <li>• AI will identify steps, owners, and tools mentioned</li>
           <li>• The generated process is a draft — review and edit before publishing</li>
         </ul>

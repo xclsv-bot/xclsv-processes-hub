@@ -39,11 +39,15 @@ export class TranscriptService {
         transcriptText = this.parseSRT(file.buffer.toString('utf-8'));
         break;
       case 'docx':
+      case 'doc':
         transcriptText = await this.parseDOCX(file.buffer);
+        break;
+      case 'pdf':
+        transcriptText = await this.parsePDF(file.buffer);
         break;
       default:
         throw new BadRequestException(
-          `Unsupported file format: ${extension}. Supported formats: TXT, VTT, SRT, DOCX`
+          `Unsupported file format: ${extension}. Supported formats: TXT, VTT, SRT, DOC, DOCX, PDF`
         );
     }
 
@@ -259,6 +263,27 @@ Create a structured process document in Markdown format with:
     } catch (error) {
       this.logger.error(`Failed to parse DOCX: ${error.message}`);
       throw new BadRequestException('Failed to parse DOCX file. Please try converting to TXT format.');
+    }
+  }
+
+  /**
+   * Parse PDF files
+   */
+  private async parsePDF(buffer: Buffer): Promise<string> {
+    try {
+      const pdfParse = (await import('pdf-parse')).default;
+      const data = await pdfParse(buffer);
+      
+      if (!data.text || data.text.trim().length < 10) {
+        throw new Error('PDF appears to be empty or contains only images');
+      }
+
+      return data.text.trim();
+    } catch (error) {
+      this.logger.error(`Failed to parse PDF: ${error.message}`);
+      throw new BadRequestException(
+        'Failed to parse PDF file. Make sure the PDF contains text (not just scanned images).'
+      );
     }
   }
 
