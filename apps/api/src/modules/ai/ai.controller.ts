@@ -1,38 +1,60 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { IsString, IsOptional, IsNumber } from 'class-validator';
 import { AIService } from './ai.service';
 import { ProcessGeneratorService } from './process-generator.service';
 import { TranscriptService } from './transcript.service';
 import { Public } from '@/common/decorators/public.decorator';
 
 class GenerateDto {
+  @IsString()
   prompt: string;
+  
+  @IsOptional()
+  @IsNumber()
   maxTokens?: number;
+  
+  @IsOptional()
+  @IsNumber()
   temperature?: number;
 }
 
 class ImproveDto {
+  @IsString()
   content: string;
 }
 
 class GenerateProcessDto {
+  @IsString()
   topic: string;
+  
+  @IsString()
   area: string;
 }
 
 class GenerateSectionDto {
+  @IsString()
   content: string;
+  
+  @IsString()
   sectionType: string;
 }
 
 class GenerateSopDto {
+  @IsString()
   processId: string;
 }
 
 class TranscriptProcessDto {
+  @IsString()
   transcript: string;
+  
+  @IsString()
   area: string;
+  
+  @IsOptional()
+  @IsString()
   filename?: string;
 }
 
