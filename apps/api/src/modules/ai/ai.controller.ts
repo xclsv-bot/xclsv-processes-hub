@@ -2,7 +2,7 @@ import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AIService } from './ai.service';
 import { ProcessGeneratorService } from './process-generator.service';
-import { Public } from '@/modules/auth/decorators/public.decorator';
+import { Public } from '@/common/decorators/public.decorator';
 
 class GenerateDto {
   prompt: string;
@@ -65,7 +65,7 @@ export class AIController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Generate a complete process document from a topic' })
   async generateProcess(@Body() dto: GenerateProcessDto) {
-    return this.processGenerator.generateProcess(dto.topic, dto.area);
+    return this.processGenerator.generateProcess(dto.topic, dto.area, 'anonymous');
   }
 
   @Post('suggest-improvements')
@@ -73,7 +73,7 @@ export class AIController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get AI suggestions for improving content' })
   async suggestImprovements(@Body() dto: ImproveDto) {
-    const suggestions = await this.processGenerator.suggestImprovements(dto.content);
+    const suggestions = await this.processGenerator.suggestImprovements(dto.content, 'anonymous');
     return { suggestions };
   }
 
@@ -85,6 +85,7 @@ export class AIController {
     const section = await this.processGenerator.generateSection(
       dto.content,
       dto.sectionType,
+      'anonymous',
     );
     return { section };
   }
