@@ -43,6 +43,7 @@ interface Process {
   title: string;
   description: string;
   content: string;
+  sopContent?: string;
   area: string;
   status: string;
   metadata?: { tags?: string[] };
@@ -66,9 +67,10 @@ export default function ProcessDetailPage() {
   const [users, setUsers] = useState<StepOwner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [viewMode, setViewMode] = useState<'steps' | 'flowchart' | 'markdown'>('steps');
+  const [viewMode, setViewMode] = useState<'steps' | 'flowchart' | 'markdown' | 'sop'>('steps');
   const [showAddStep, setShowAddStep] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [generatingSop, setGeneratingSop] = useState(false);
 
   const handlePublish = async () => {
     if (!process) return;
@@ -80,6 +82,19 @@ export default function ProcessDetailPage() {
       alert(err.response?.data?.message || 'Failed to publish');
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleGenerateSop = async () => {
+    if (!process) return;
+    setGeneratingSop(true);
+    try {
+      const res = await api.post('/ai/generate-sop', { processId: process.id });
+      setProcess({ ...process, sopContent: res.data.sopContent });
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to generate SOP');
+    } finally {
+      setGeneratingSop(false);
     }
   };
 
@@ -221,42 +236,54 @@ export default function ProcessDetailPage() {
         </div>
 
         {/* View Toggle */}
-        {hasSteps && (
-          <div className="mb-4 flex gap-2">
-            <button
-              onClick={() => setViewMode('steps')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'steps'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              📋 Steps ({stepsData?.totalSteps || 0})
-            </button>
-            <button
-              onClick={() => setViewMode('flowchart')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'flowchart'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              🔀 Flowchart
-            </button>
-            {hasContent && (
+        <div className="mb-4 flex gap-2 flex-wrap">
+          {hasSteps && (
+            <>
               <button
-                onClick={() => setViewMode('markdown')}
+                onClick={() => setViewMode('steps')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === 'markdown'
+                  viewMode === 'steps'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                📄 Document
+                📋 Steps ({stepsData?.totalSteps || 0})
               </button>
-            )}
-          </div>
-        )}
+              <button
+                onClick={() => setViewMode('flowchart')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'flowchart'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                🔀 Flowchart
+              </button>
+            </>
+          )}
+          {hasContent && (
+            <button
+              onClick={() => setViewMode('markdown')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'markdown'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              📄 Document
+            </button>
+          )}
+          <button
+            onClick={() => setViewMode('sop')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'sop'
+                ? 'bg-purple-600 text-white'
+                : 'bg-white text-purple-700 border border-purple-300 hover:bg-purple-50'
+            }`}
+          >
+            📋 SOP View
+          </button>
+        </div>
 
         {/* Content */}
         <div className="bg-white rounded-lg shadow p-6 md:p-8">
@@ -362,6 +389,68 @@ export default function ProcessDetailPage() {
                 {process.content}
               </ReactMarkdown>
             </article>
+          )}
+
+          {/* SOP View */}
+          {viewMode === 'sop' && (
+            <div>
+              {process.sopContent ? (
+                <article className="prose prose-slate prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-table:text-sm max-w-none">
+                  <div className="mb-4 pb-4 border-b border-gray-200 flex items-center justify-between">
+                    <span className="text-sm text-gray-500">📋 Standard Operating Procedure Format</span>
+                    <button
+                      onClick={handleGenerateSop}
+                      disabled={generatingSop}
+                      className="text-sm text-purple-600 hover:text-purple-700 disabled:opacity-50"
+                    >
+                      {generatingSop ? '🔄 Regenerating...' : '🔄 Regenerate SOP'}
+                    </button>
+                  </div>
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      table: ({node, ...props}) => (
+                        <div className="overflow-x-auto my-4">
+                          <table className="min-w-full border-collapse border border-gray-300" {...props} />
+                        </div>
+                      ),
+                      th: ({node, ...props}) => (
+                        <th className="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold" {...props} />
+                      ),
+                      td: ({node, ...props}) => (
+                        <td className="border border-gray-300 px-3 py-2" {...props} />
+                      ),
+                      h2: ({node, ...props}) => (
+                        <h2 className="text-xl font-bold mt-6 mb-3 text-gray-900 border-b pb-2" {...props} />
+                      ),
+                      h3: ({node, ...props}) => (
+                        <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-800" {...props} />
+                      ),
+                      hr: ({node, ...props}) => (
+                        <hr className="my-6 border-gray-200" {...props} />
+                      ),
+                    }}
+                  >
+                    {process.sopContent}
+                  </ReactMarkdown>
+                </article>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📋</div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No SOP Generated Yet</h3>
+                  <p className="text-gray-500 mb-6">
+                    Generate a formal Standard Operating Procedure from the process content.
+                  </p>
+                  <button
+                    onClick={handleGenerateSop}
+                    disabled={generatingSop}
+                    className="px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 font-medium"
+                  >
+                    {generatingSop ? '✨ Generating SOP...' : '✨ Generate SOP'}
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
 

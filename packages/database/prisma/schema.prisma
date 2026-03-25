@@ -55,6 +55,7 @@ model Process {
   slug                    String              @unique
   description             String?             @db.Text
   content                 String?             @db.Text
+  sopContent              String?             @db.Text
   type                    ProcessType         @default(PROCESS)
   status                  ProcessStatus       @default(DRAFT)
   area                    ProcessArea

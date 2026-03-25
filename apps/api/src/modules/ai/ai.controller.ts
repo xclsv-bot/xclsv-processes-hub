@@ -24,6 +24,10 @@ class GenerateSectionDto {
   sectionType: string;
 }
 
+class GenerateSopDto {
+  processId: string;
+}
+
 @ApiTags('AI')
 @Controller('ai')
 export class AIController {
@@ -88,5 +92,13 @@ export class AIController {
       'anonymous',
     );
     return { section };
+  }
+
+  @Post('generate-sop')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Generate SOP format from process content and save it' })
+  async generateSop(@Body() dto: GenerateSopDto) {
+    return this.processGenerator.generateAndSaveSop(dto.processId);
   }
 }

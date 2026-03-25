@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AIService } from './ai.service';
+import { PrismaService } from '@/common/prisma/prisma.service';
 
 export interface ProcessTemplate {
   title: string;
@@ -8,11 +9,61 @@ export interface ProcessTemplate {
   suggestedTags: string[];
 }
 
+const SOP_TEMPLATE = `## [TITLE]
+
+### Document Information
+| Field | Value |
+|-------|-------|
+| **Owner** | [OWNER] |
+| **Department** | [DEPARTMENT] |
+| **Last Updated** | [DATE] |
+| **Status** | [STATUS] |
+
+---
+
+### 1. Purpose
+[Clearly state why this process exists and what it accomplishes]
+
+### 2. Scope
+[Define when and where this process applies, and any limitations]
+
+### 3. Prerequisites
+- [What needs to be in place before starting]
+- [Required access, tools, or permissions]
+
+### 4. Procedure
+
+#### Step 1: [Step Title]
+[Detailed instructions]
+
+#### Step 2: [Step Title]
+[Detailed instructions]
+
+#### Step 3: [Step Title]
+[Detailed instructions]
+
+### 5. Expected Outcomes
+[What success looks like when this process is completed correctly]
+
+### 6. Troubleshooting
+| Issue | Solution |
+|-------|----------|
+| [Common problem] | [How to resolve] |
+
+### 7. Related Documents
+- [Links to related processes or resources]
+
+---
+*This SOP was generated from process documentation.*`;
+
 @Injectable()
 export class ProcessGeneratorService {
   private readonly logger = new Logger(ProcessGeneratorService.name);
 
-  constructor(private readonly aiService: AIService) {}
+  constructor(
+    private readonly aiService: AIService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async generateProcess(
     topic: string,
@@ -134,5 +185,83 @@ Format the response in HTML.`;
     });
 
     return response.content;
+  }
+
+  async generateAndSaveSop(processId: string): Promise<{ sopContent: string }> {
+    // Fetch the process
+    const process = await this.prisma.process.findUnique({
+      where: { id: processId },
+      include: { owner: true },
+    });
+
+    if (!process) {
+      throw new NotFoundException(`Process ${processId} not found`);
+    }
+
+    // Generate SOP from content
+    const prompt = `Convert this process documentation into a formal Standard Operating Procedure (SOP) format.
+
+**Process Title:** ${process.title}
+**Owner:** ${process.owner?.name || 'Not assigned'}
+**Department:** ${process.area}
+**Description:** ${process.description || 'N/A'}
+
+**Current Content:**
+${process.content || 'No content provided'}
+
+Create a professional SOP document in Markdown format that includes:
+1. Document Information (owner, department, date, status)
+2. Purpose - why this process exists
+3. Scope - when/where it applies
+4. Prerequisites - what's needed before starting
+5. Procedure - numbered steps with clear instructions
+6. Expected Outcomes - what success looks like
+7. Troubleshooting - common issues and solutions table
+8. Related Documents - placeholder for links
+
+Use proper markdown formatting with headers (##, ###), tables, and bullet points.
+Keep the original process steps but organize them into the SOP structure.
+Be professional but concise.`;
+
+    const response = await this.aiService.generate(prompt, {
+      maxTokens: 4096,
+      temperature: 0.3,
+      feature: 'generate-sop',
+      systemPrompt: 'You are an expert at creating formal Standard Operating Procedure (SOP) documents. Create clear, professional documentation in Markdown format.',
+    });
+
+    // Save the SOP content
+    await this.prisma.process.update({
+      where: { id: processId },
+      data: { sopContent: response.content },
+    });
+
+    return { sopContent: response.content };
+  }
+
+  async generateSopForAll(): Promise<{ processed: number; errors: string[] }> {
+    const processes = await this.prisma.process.findMany({
+      where: { 
+        sopContent: null,
+        content: { not: null },
+      },
+      select: { id: true, title: true },
+    });
+
+    const errors: string[] = [];
+    let processed = 0;
+
+    for (const process of processes) {
+      try {
+        await this.generateAndSaveSop(process.id);
+        processed++;
+        this.logger.log(`Generated SOP for: ${process.title}`);
+      } catch (error) {
+        errors.push(`${process.title}: ${error.message}`);
+        this.logger.error(`Failed to generate SOP for ${process.title}: ${error.message}`);
+      }
+    }
+
+    return { processed, errors };
   }
 }
