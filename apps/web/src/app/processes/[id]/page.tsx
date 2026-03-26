@@ -44,6 +44,7 @@ interface Process {
   title: string;
   description: string;
   content: string;
+  exampleContent?: string;
   sopContent?: string;
   type: 'PROCESS' | 'DOCUMENT';
   area: string;
@@ -70,7 +71,7 @@ export default function ProcessDetailPage() {
   const [users, setUsers] = useState<StepOwner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [viewMode, setViewMode] = useState<'steps' | 'flowchart' | 'markdown' | 'sop' | 'history'>('steps');
+  const [viewMode, setViewMode] = useState<'steps' | 'flowchart' | 'markdown' | 'example' | 'sop' | 'history'>('steps');
   const [showAddStep, setShowAddStep] = useState(false);
   const [selectedStep, setSelectedStep] = useState<Step | null>(null);
   const [publishing, setPublishing] = useState(false);
@@ -200,6 +201,36 @@ export default function ProcessDetailPage() {
   const tags = process.metadata?.tags || [];
   const hasSteps = stepsData && stepsData.steps.length > 0;
   const hasContent = process.content && process.content.trim().length > 0;
+  const hasExample = process.exampleContent && process.exampleContent.trim().length > 0;
+
+  // Download content as .docx (simple HTML wrapper for Word)
+  const handleDownload = (content: string, filename: string) => {
+    const htmlContent = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
+      <head><meta charset="utf-8"><title>${filename}</title></head>
+      <body style="font-family: Arial, sans-serif;">
+        ${content
+          .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+          .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+          .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          .replace(/^- (.*$)/gm, '<li>$1</li>')
+          .replace(/^(\d+)\. (.*$)/gm, '<li>$2</li>')
+          .replace(/\n/g, '<br/>')
+        }
+      </body></html>
+    `;
+    const blob = new Blob([htmlContent], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -307,7 +338,20 @@ export default function ProcessDetailPage() {
                   : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
               }`}
             >
-              📄 Document
+              📄 {process.type === 'DOCUMENT' ? 'Template' : 'Document'}
+            </button>
+          )}
+          {/* Example tab for documents with example content */}
+          {process.type === 'DOCUMENT' && process.exampleContent && (
+            <button
+              onClick={() => setViewMode('example')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'example'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-white text-green-700 border border-green-300 hover:bg-green-50'
+              }`}
+            >
+              📝 Example
             </button>
           )}
           {/* Only show SOP tab for PROCESS type */}
@@ -389,11 +433,23 @@ export default function ProcessDetailPage() {
             />
           )}
 
-          {/* Markdown View */}
+          {/* Markdown/Template View */}
           {viewMode === 'markdown' && hasContent && (
-            <article className="prose prose-slate prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-table:text-sm max-w-none">
-              <ReactMarkdown 
-                remarkPlugins={[remarkGfm]}
+            <div>
+              <div className="mb-4 pb-4 border-b border-gray-200 flex items-center justify-between">
+                <span className="text-sm text-gray-500">
+                  {process.type === 'DOCUMENT' ? '📄 Template Document' : '📄 Document Content'}
+                </span>
+                <button
+                  onClick={() => handleDownload(process.content, `${process.title} - Template`)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md"
+                >
+                  ⬇️ Download .doc
+                </button>
+              </div>
+              <article className="prose prose-slate prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-table:text-sm max-w-none">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
                 components={{
                   table: ({node, ...props}) => (
                     <div className="overflow-x-auto my-4">
@@ -438,6 +494,69 @@ export default function ProcessDetailPage() {
                 {process.content}
               </ReactMarkdown>
             </article>
+            </div>
+          )}
+
+          {/* Example View (for documents with examples) */}
+          {viewMode === 'example' && hasExample && (
+            <div>
+              <div className="mb-4 pb-4 border-b border-gray-200 flex items-center justify-between">
+                <span className="text-sm text-gray-500">📝 Example Document</span>
+                <button
+                  onClick={() => handleDownload(process.exampleContent!, `${process.title} - Example`)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md"
+                >
+                  ⬇️ Download .doc
+                </button>
+              </div>
+              <article className="prose prose-slate prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-table:text-sm max-w-none">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    table: ({node, ...props}) => (
+                      <div className="overflow-x-auto my-4">
+                        <table className="min-w-full border-collapse border border-gray-300" {...props} />
+                      </div>
+                    ),
+                    th: ({node, ...props}) => (
+                      <th className="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold" {...props} />
+                    ),
+                    td: ({node, ...props}) => (
+                      <td className="border border-gray-300 px-3 py-2" {...props} />
+                    ),
+                    h1: ({node, ...props}) => (
+                      <h1 className="text-2xl font-bold mt-6 mb-4 text-gray-900" {...props} />
+                    ),
+                    h2: ({node, ...props}) => (
+                      <h2 className="text-xl font-bold mt-6 mb-3 text-gray-900 border-b pb-2" {...props} />
+                    ),
+                    h3: ({node, ...props}) => (
+                      <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-800" {...props} />
+                    ),
+                    blockquote: ({node, ...props}) => (
+                      <blockquote className="border-l-4 border-green-500 pl-4 my-4 italic bg-green-50 py-2 rounded-r" {...props} />
+                    ),
+                    ul: ({node, ...props}) => (
+                      <ul className="list-disc pl-6 my-3 space-y-1" {...props} />
+                    ),
+                    ol: ({node, ...props}) => (
+                      <ol className="list-decimal pl-6 my-3 space-y-1" {...props} />
+                    ),
+                    li: ({node, ...props}) => (
+                      <li className="text-gray-700" {...props} />
+                    ),
+                    hr: ({node, ...props}) => (
+                      <hr className="my-6 border-gray-200" {...props} />
+                    ),
+                    p: ({node, ...props}) => (
+                      <p className="my-3 text-gray-700 leading-relaxed" {...props} />
+                    ),
+                  }}
+                >
+                  {process.exampleContent}
+                </ReactMarkdown>
+              </article>
+            </div>
           )}
 
           {/* SOP View */}

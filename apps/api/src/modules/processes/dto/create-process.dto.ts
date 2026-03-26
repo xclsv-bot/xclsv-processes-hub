@@ -42,6 +42,11 @@ export class CreateProcessDto {
   @IsString()
   content?: string;
 
+  @ApiPropertyOptional({ example: '# Example: Client XYZ\n\nThis is how it looks when filled out...' })
+  @IsOptional()
+  @IsString()
+  exampleContent?: string;
+
   @ApiProperty({ enum: ProcessArea, example: ProcessArea.EVENTS })
   @IsEnum(ProcessArea)
   area: ProcessArea;

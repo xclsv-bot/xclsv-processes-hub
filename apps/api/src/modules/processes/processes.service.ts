@@ -28,6 +28,7 @@ export class ProcessesService {
         slug,
         description: dto.description,
         content: dto.content,
+        exampleContent: dto.exampleContent,
         area: dto.area,
         metadata: dto.metadata,
         ownerId: userId,
