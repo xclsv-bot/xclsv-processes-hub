@@ -38,7 +38,7 @@ export class ProcessesController {
     @CurrentUser('id') userId?: string,
   ) {
     // MVP: Default to Z's user if no auth
-    const ownerId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    const ownerId = userId || '53a1b412-758f-4210-9133-917e6bd89e07';
     return this.processesService.create(dto, ownerId);
   }
 
@@ -86,7 +86,7 @@ export class ProcessesController {
     @CurrentUser('id') userId?: string,
   ) {
     // MVP: Default to Z's user if no auth
-    const ownerId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    const ownerId = userId || '53a1b412-758f-4210-9133-917e6bd89e07';
     return this.processesService.update(id, dto, ownerId);
   }
 
@@ -99,7 +99,7 @@ export class ProcessesController {
     @Param('id') id: string,
     @CurrentUser('id') userId?: string,
   ) {
-    const ownerId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    const ownerId = userId || '53a1b412-758f-4210-9133-917e6bd89e07';
     return this.processesService.publish(id, ownerId);
   }
 
@@ -124,7 +124,7 @@ export class ProcessesController {
     @Param('id') id: string,
     @CurrentUser('id') userId?: string,
   ) {
-    const ownerId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    const ownerId = userId || '53a1b412-758f-4210-9133-917e6bd89e07';
     return this.processesService.delete(id, ownerId);
   }
 
@@ -170,7 +170,7 @@ export class ProcessesController {
     @Param('version') version: string,
     @CurrentUser('id') userId?: string,
   ) {
-    const ownerId = userId || 'cc2ed391-2f1c-4ffb-83f5-bb4218c61ad3';
+    const ownerId = userId || '53a1b412-758f-4210-9133-917e6bd89e07';
     return this.processesService.restoreVersion(id, parseInt(version, 10), ownerId);
   }
 }
