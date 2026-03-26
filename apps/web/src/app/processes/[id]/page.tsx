@@ -457,10 +457,10 @@ export default function ProcessDetailPage() {
                     </div>
                   ),
                   th: ({node, ...props}) => (
-                    <th className="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold" {...props} />
+                    <th className="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold text-gray-900" {...props} />
                   ),
                   td: ({node, ...props}) => (
-                    <td className="border border-gray-300 px-3 py-2" {...props} />
+                    <td className="border border-gray-300 px-3 py-2 text-gray-700" {...props} />
                   ),
                   h1: ({node, ...props}) => (
                     <h1 className="text-2xl font-bold mt-6 mb-4 text-gray-900" {...props} />
@@ -519,10 +519,10 @@ export default function ProcessDetailPage() {
                       </div>
                     ),
                     th: ({node, ...props}) => (
-                      <th className="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold" {...props} />
+                      <th className="border border-gray-300 bg-gray-100 px-3 py-2 text-left font-semibold text-gray-900" {...props} />
                     ),
                     td: ({node, ...props}) => (
-                      <td className="border border-gray-300 px-3 py-2" {...props} />
+                      <td className="border border-gray-300 px-3 py-2 text-gray-700" {...props} />
                     ),
                     h1: ({node, ...props}) => (
                       <h1 className="text-2xl font-bold mt-6 mb-4 text-gray-900" {...props} />
