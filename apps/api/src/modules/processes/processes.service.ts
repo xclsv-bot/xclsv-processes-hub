@@ -27,6 +27,7 @@ export class ProcessesService {
         title: dto.title,
         slug,
         description: dto.description,
+        guideContent: dto.guideContent,
         content: dto.content,
         exampleContent: dto.exampleContent,
         area: dto.area,

@@ -43,6 +43,7 @@ interface Process {
   id: string;
   title: string;
   description: string;
+  guideContent?: string;
   content: string;
   exampleContent?: string;
   sopContent?: string;
@@ -71,7 +72,7 @@ export default function ProcessDetailPage() {
   const [users, setUsers] = useState<StepOwner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [viewMode, setViewMode] = useState<'steps' | 'flowchart' | 'markdown' | 'example' | 'sop' | 'history'>('steps');
+  const [viewMode, setViewMode] = useState<'steps' | 'flowchart' | 'guide' | 'markdown' | 'example' | 'sop' | 'history'>('steps');
   const [showAddStep, setShowAddStep] = useState(false);
   const [selectedStep, setSelectedStep] = useState<Step | null>(null);
   const [publishing, setPublishing] = useState(false);
@@ -134,9 +135,13 @@ export default function ProcessDetailPage() {
         setTools(toolsRes.data.data);
         setUsers(usersRes.data.data || []);
         
-        // For documents, default to markdown view instead of steps
+        // For documents, default to guide view (if exists) or template
         if (processData.type === 'DOCUMENT') {
-          setViewMode('markdown');
+          if (processData.guideContent) {
+            setViewMode('guide');
+          } else {
+            setViewMode('markdown');
+          }
         }
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to load process');
@@ -200,6 +205,7 @@ export default function ProcessDetailPage() {
 
   const tags = process.metadata?.tags || [];
   const hasSteps = stepsData && stepsData.steps.length > 0;
+  const hasGuide = process.guideContent && process.guideContent.trim().length > 0;
   const hasContent = process.content && process.content.trim().length > 0;
   const hasExample = process.exampleContent && process.exampleContent.trim().length > 0;
 
@@ -329,6 +335,19 @@ export default function ProcessDetailPage() {
             </button>
           )}
 
+          {/* Guide tab for documents with how-to content */}
+          {process.type === 'DOCUMENT' && hasGuide && (
+            <button
+              onClick={() => setViewMode('guide')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'guide'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white text-purple-700 border border-purple-300 hover:bg-purple-50'
+              }`}
+            >
+              📖 Guide
+            </button>
+          )}
           {hasContent && (
             <button
               onClick={() => setViewMode('markdown')}
@@ -431,6 +450,48 @@ export default function ProcessDetailPage() {
               onSave={handleUpdateStep}
               onDelete={handleDeleteStep}
             />
+          )}
+
+          {/* Guide View (no download) */}
+          {viewMode === 'guide' && hasGuide && (
+            <div>
+              <div className="mb-4 pb-4 border-b border-gray-200">
+                <span className="text-sm text-gray-500">📖 How to Use This Template</span>
+              </div>
+              <article className="prose prose-slate prose-headings:text-gray-900 prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-table:text-sm max-w-none">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({node, ...props}) => (
+                      <h1 className="text-2xl font-bold mt-6 mb-4 text-gray-900" {...props} />
+                    ),
+                    h2: ({node, ...props}) => (
+                      <h2 className="text-xl font-bold mt-6 mb-3 text-gray-900 border-b pb-2" {...props} />
+                    ),
+                    h3: ({node, ...props}) => (
+                      <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-800" {...props} />
+                    ),
+                    blockquote: ({node, ...props}) => (
+                      <blockquote className="border-l-4 border-purple-500 pl-4 my-4 italic bg-purple-50 py-2 rounded-r text-gray-700" {...props} />
+                    ),
+                    ul: ({node, ...props}) => (
+                      <ul className="list-disc pl-6 my-3 space-y-1" {...props} />
+                    ),
+                    ol: ({node, ...props}) => (
+                      <ol className="list-decimal pl-6 my-3 space-y-1" {...props} />
+                    ),
+                    li: ({node, ...props}) => (
+                      <li className="text-gray-700" {...props} />
+                    ),
+                    p: ({node, ...props}) => (
+                      <p className="my-3 text-gray-700 leading-relaxed" {...props} />
+                    ),
+                  }}
+                >
+                  {process.guideContent}
+                </ReactMarkdown>
+              </article>
+            </div>
           )}
 
           {/* Markdown/Template View */}

@@ -59,6 +59,7 @@ model Process {
   title                   String
   slug                    String              @unique
   description             String?             @db.Text
+  guideContent            String?             @db.Text
   content                 String?             @db.Text
   exampleContent          String?             @db.Text
   sopContent              String?             @db.Text

@@ -37,6 +37,11 @@ export class CreateProcessDto {
   @MaxLength(500)
   description?: string;
 
+  @ApiPropertyOptional({ example: '## How to Use\n\nThis guide helps you...' })
+  @IsOptional()
+  @IsString()
+  guideContent?: string;
+
   @ApiPropertyOptional({ example: '# Introduction\n\nThis process covers...' })
   @IsOptional()
   @IsString()
