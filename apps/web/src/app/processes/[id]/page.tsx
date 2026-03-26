@@ -45,6 +45,7 @@ interface Process {
   description: string;
   content: string;
   sopContent?: string;
+  type: 'PROCESS' | 'DOCUMENT';
   area: string;
   status: string;
   currentVersion?: number;
@@ -126,10 +127,16 @@ export default function ProcessDetailPage() {
           api.get('/users').catch(() => ({ data: { data: [] } })),
         ]);
 
-        setProcess(processRes.data.data);
+        const processData = processRes.data.data;
+        setProcess(processData);
         setStepsData(stepsRes.data.data);
         setTools(toolsRes.data.data);
         setUsers(usersRes.data.data || []);
+        
+        // For documents, default to markdown view instead of steps
+        if (processData.type === 'DOCUMENT') {
+          setViewMode('markdown');
+        }
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to load process');
       } finally {
@@ -277,16 +284,19 @@ export default function ProcessDetailPage() {
 
         {/* View Toggle */}
         <div className="mb-4 flex gap-2 flex-wrap">
-          <button
-            onClick={() => setViewMode('steps')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'steps'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            📋 Steps {hasSteps ? `(${stepsData?.totalSteps || 0})` : ''}
-          </button>
+          {/* Only show Steps tab for PROCESS type, not DOCUMENT */}
+          {process.type !== 'DOCUMENT' && (
+            <button
+              onClick={() => setViewMode('steps')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'steps'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              📋 Steps {hasSteps ? `(${stepsData?.totalSteps || 0})` : ''}
+            </button>
+          )}
 
           {hasContent && (
             <button
@@ -300,16 +310,19 @@ export default function ProcessDetailPage() {
               📄 Document
             </button>
           )}
-          <button
-            onClick={() => setViewMode('sop')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'sop'
-                ? 'bg-purple-600 text-white'
-                : 'bg-white text-purple-700 border border-purple-300 hover:bg-purple-50'
-            }`}
-          >
-            📋 SOP View
-          </button>
+          {/* Only show SOP tab for PROCESS type */}
+          {process.type !== 'DOCUMENT' && (
+            <button
+              onClick={() => setViewMode('sop')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'sop'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white text-purple-700 border border-purple-300 hover:bg-purple-50'
+              }`}
+            >
+              📋 SOP View
+            </button>
+          )}
           <button
             onClick={() => setViewMode('history')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
