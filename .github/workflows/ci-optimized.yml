@@ -43,7 +43,7 @@ jobs:
       
       # Cache the entire workspace for downstream jobs
       - name: Cache workspace
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: |
             node_modules
@@ -71,7 +71,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       
       - name: Restore workspace cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             node_modules
@@ -103,7 +103,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       
       - name: Restore workspace cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             node_modules
@@ -135,7 +135,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       
       - name: Restore workspace cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             node_modules
@@ -167,7 +167,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       
       - name: Restore workspace cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             node_modules
